@@ -81,7 +81,7 @@ void add_to_error_list(webvtt_parser self, vtt_error_t *er) {
 
 void print_error_list(webvtt_parser self) {
 	FILE *fp = NULL;
-	int i;
+	webvtt_uint i;
 
 	fp = fopen("errorlog.txt", "w");
 	for (i = 0; i < self->error_list_size; i++) {
