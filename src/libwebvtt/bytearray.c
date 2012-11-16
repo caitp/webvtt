@@ -8,7 +8,7 @@
  * Allocate new bytearray.
  */
 WEBVTT_INTERN webvtt_status
-webvtt_bytearray_new( webvtt_uint32 alloc, webvtt_bytearray *pba )
+webvtt_create_bytearray( webvtt_uint32 alloc, webvtt_bytearray *pba )
 {
 	webvtt_bytearray s;
 	if( !pba )
@@ -33,7 +33,7 @@ webvtt_bytearray_new( webvtt_uint32 alloc, webvtt_bytearray *pba )
  * Delete bytearray
  */
 WEBVTT_INTERN void
-webvtt_bytearray_delete( webvtt_bytearray *pstr )
+webvtt_delete_bytearray( webvtt_bytearray *pstr )
 {
 	if( pstr && *pstr )
 	{

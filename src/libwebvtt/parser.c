@@ -174,13 +174,13 @@ webvtt_finish_parsing( webvtt_parser self )
 			if( self->line_buffer )
 			{
 				webvtt_uint pos = 0;
-				webvtt_string_new( self->line_buffer->length, &self->cue->payload );
+				webvtt_create_string( self->line_buffer->length, &self->cue->payload );
 				if( webvtt_string_append_utf8( &self->cue->payload, self->line_buffer->text, &pos, 
 					self->line_buffer->length, 0 ) == WEBVTT_OUT_OF_MEMORY )
 				{
 					ERROR(WEBVTT_ALLOCATION_FAILED);
 				}
-				webvtt_bytearray_delete(&self->line_buffer);
+				webvtt_delete_bytearray(&self->line_buffer);
 			}
 			finish_cue( self );
 			break;
@@ -197,7 +197,7 @@ webvtt_delete_parser( webvtt_parser self )
 	{
 		if( self->line_buffer )
 		{
-			webvtt_bytearray_delete( &self->line_buffer );
+			webvtt_delete_bytearray( &self->line_buffer );
 		}
 		if( self->cue )
 		{
@@ -332,7 +332,7 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 								if( self->line_buffer )
 								{
 									webvtt_string utf16;
-									if( webvtt_string_new( self->line_buffer->length, &utf16 ) == WEBVTT_OUT_OF_MEMORY )
+									if( webvtt_create_string( self->line_buffer->length, &utf16 ) == WEBVTT_OUT_OF_MEMORY )
 									{
 										ERROR(WEBVTT_ALLOCATION_FAILED);
 									}
@@ -341,7 +341,7 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 										webvtt_uint pos = 0;
 										webvtt_string_append_utf8( &utf16, self->line_buffer->text, &pos, self->line_buffer->length, 0 );
 									}
-									webvtt_bytearray_delete( &self->line_buffer );
+									webvtt_delete_bytearray( &self->line_buffer );
 									self->line_pos = 0;
 									self->cue->payload = utf16;
 								}
@@ -400,7 +400,7 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 					{
 						self->state = T_PREPAYLOAD;
 						self->mode = M_BUFFER_TOKENS;
-						webvtt_bytearray_delete(&self->line_buffer);
+						webvtt_delete_bytearray(&self->line_buffer);
 						self->line_pos = 0;
 						continue;
 					}
@@ -504,7 +504,7 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 						ELIF_TRANSITION(SIZE,T_SIZE)
 						ELIF_TRANSITION(ALIGN,T_ALIGN)
 						ELIF_TRANSITION(NEWLINE,T_PAYLOAD)
-							webvtt_bytearray_delete(&self->line_buffer);
+							webvtt_delete_bytearray(&self->line_buffer);
 							self->mode = M_READ_LINE;
 						ELSE
 							ERROR(WEBVTT_INVALID_CUESETTING);
@@ -688,7 +688,7 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 						}
 						if( !self->line_buffer )
 						{
-							if( webvtt_bytearray_new( 0x80, &self->line_buffer ) != WEBVTT_SUCCESS )
+							if( webvtt_create_bytearray( 0x80, &self->line_buffer ) != WEBVTT_SUCCESS )
 							{
 								ERROR(WEBVTT_ALLOCATION_FAILED);
 							}
@@ -718,7 +718,7 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 								/**
 								 * We should have a start time, but... We don't.
 								 */
-								webvtt_bytearray_delete( &self->line_buffer );
+								webvtt_delete_bytearray( &self->line_buffer );
 								ERROR(WEBVTT_CUE_INCOMPLETE);
 								self->mode = M_BUFFER_TOKENS;
 								self->state = T_CUEEOL;
@@ -733,13 +733,13 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 							else
 							{
 								webvtt_uint pos = 0;
-								webvtt_string_new( self->line_buffer->length, &self->cue->id );
+								webvtt_create_string( self->line_buffer->length, &self->cue->id );
 								if( webvtt_string_append_utf8( &self->cue->id, self->line_buffer->text, &pos, 
 									self->line_buffer->length, 0 ) == WEBVTT_OUT_OF_MEMORY )
 								{
 									ERROR(WEBVTT_ALLOCATION_FAILED);
 								}
-								webvtt_bytearray_delete(&self->line_buffer);
+								webvtt_delete_bytearray(&self->line_buffer);
 								self->mode = M_BUFFER_TOKENS;
 							}
 						}
@@ -758,7 +758,7 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 						webvtt_uint linepos;
 						if( !self->line_buffer )
 						{
-							if( webvtt_bytearray_new( 0x80, &self->line_buffer ) == WEBVTT_OUT_OF_MEMORY )
+							if( webvtt_create_bytearray( 0x80, &self->line_buffer ) == WEBVTT_OUT_OF_MEMORY )
 							{
 								ERROR(WEBVTT_ALLOCATION_FAILED);
 							}
@@ -787,7 +787,7 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 							if( linepos != 0 )
 							{
 								webvtt_bytearray ba;
-								webvtt_bytearray_new( self->line_buffer->length - linepos, &ba );
+								webvtt_create_bytearray( self->line_buffer->length - linepos, &ba );
 								memcpy( ba->text, self->line_buffer->text + linepos, self->line_buffer->length - linepos );
 								ba->length += (self->line_buffer->length - linepos );
 								ba->text[ ba->length ] = 0;

@@ -17,10 +17,14 @@ typedef void (WEBVTT_CALLBACK *webvtt_cue_fn_ptr)( void *userdata, webvtt_cue cu
 	
 WEBVTT_EXPORT webvtt_status webvtt_create_parser( webvtt_cue_fn_ptr on_read, webvtt_error_fn_ptr on_error, void *
 									userdata, webvtt_parser *ppout );
+
+void webvtt_delete_parser( webvtt_parser parser );
+webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );
+webvtt_status webvtt_finish_parsing( webvtt_parser self );
+
 WEBVTT_EXPORT void webvtt_delete_parser( webvtt_parser parser );
 WEBVTT_EXPORT webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );
 WEBVTT_EXPORT webvtt_status webvtt_finish_parsing( webvtt_parser self );
-WEBVTT_EXPORT webvtt_status webvtt_parse_cuetext( webvtt_parser self, webvtt_uint line,
-	const webvtt_wchar *pch, const webvtt_uint len, webvtt_node *pnode );
+WEBVTT_EXPORT webvtt_status webvtt_parse_cuetext( webvtt_wchar *cue_text, webvtt_node_ptr node_ptr );
 
 #endif

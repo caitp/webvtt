@@ -191,6 +191,8 @@
     <ClInclude Include="..\..\include\webvtt\util.h" />
     <ClInclude Include="..\..\include\webvtt\parser.h" />
     <ClInclude Include="..\..\src\libwebvtt\bytearray.h" />
+    <ClInclude Include="..\..\src\libwebvtt\cue.h" />
+    <ClInclude Include="..\..\src\libwebvtt\cuetext.h" />
     <ClInclude Include="..\..\src\libwebvtt\parser.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

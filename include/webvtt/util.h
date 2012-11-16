@@ -126,6 +126,13 @@ WEBVTT_EXPORT void webvtt_set_allocator( webvtt_alloc_fn_ptr alloc, webvtt_free_
 
 typedef enum webvtt_status_t webvtt_status;
 
+/**
+ * Macros to filter out webvtt status returns.
+ */
+
+#define WEBVTT_ENSURE_SUCCESS(status) ( status == WEBVTT_SUCCESS );
+#define WEBVTT_FAILED(status) ( status != WEBVTT_SUCCESS );
+
 enum
 webvtt_status_t
 {
@@ -135,6 +142,11 @@ webvtt_status_t
 	WEBVTT_OUT_OF_MEMORY = -3,
 	WEBVTT_INVALID_PARAM = -4,
 	WEBVTT_NOT_SUPPORTED = -5,
+	WEBVTT_UNSUCCESSFUL = -6,
+	WEBVTT_INVALID_TAG_NAME = -7,
+	WEBVTT_INVALID_TOKEN_TYPE = -8,
+	WEBVTT_INVALID_TOKEN_STATE = -9,
+	WEBVTT_FAIL = -10
 };
 
 #endif
