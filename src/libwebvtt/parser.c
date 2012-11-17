@@ -1,5 +1,8 @@
 #include "parser.h"
 #include <string.h>
+#include "error.h"
+#include <stdlib.h>
+
 #define FULLSTOP (0x2E)
 
 /**
@@ -59,9 +62,10 @@ static int parse_timestamp( webvtt_parser self, const webvtt_byte *b, webvtt_tim
 
 WEBVTT_EXPORT webvtt_status
 webvtt_create_parser( webvtt_cue_fn_ptr on_read,
-						webvtt_error_fn_ptr on_error, void *
-						userdata,
-						webvtt_parser *ppout )
+						webvtt_error_fn_ptr on_error, 
+						void *userdata,
+						webvtt_parser *ppout,
+						short save_errors)
 {
 	webvtt_parser p;
 	if( !on_read || !on_error || !ppout )
@@ -80,6 +84,12 @@ webvtt_create_parser( webvtt_cue_fn_ptr on_read,
 	p->userdata = userdata;
 	*ppout = p;
 	
+	/* Initialize error list */
+	if (save_errors) {
+		p->error_list = (vtt_error_t *)malloc(sizeof(vtt_error_t));
+		p->error_list_size = 0;
+	}
+
 	return WEBVTT_SUCCESS;
 }
 
@@ -203,6 +213,10 @@ webvtt_delete_parser( webvtt_parser self )
 		{
 			webvtt_delete_cue( (webvtt_cue *)&self->cue );
 		}
+		/* Destroy the error list and the vtt_error_t instances it contains */
+		if (self->error_list)
+			destroy_error_list(self);		
+
 		webvtt_free( self );
 	}
 }

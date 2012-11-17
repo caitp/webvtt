@@ -5,6 +5,11 @@
 #include <stdio.h>
 #include "parser.h"
 
+/* List of common error messages that can be encountered in the parser.
+ * Add more entries and use this array with the enum: webvtt_error in error.h
+ * to send relavant error messages to the vtt_error_T structure.
+*/
+
 static const char *errstr[] =
 {
 	/* WEBVTT_ALLOCATION_FAILED */ "error allocating object",
@@ -78,30 +83,28 @@ void add_to_error_list(webvtt_parser self, vtt_error_t *er) {
 	}
 	self->error_list++;
 }
-
+/* Prints errors stored int he webvtt_parser structure to standard error. */
 void print_error_list(webvtt_parser self) {
-	FILE *fp = NULL;
-	webvtt_uint i;
 
-	fp = fopen("errorlog.txt", "w");
-	for (i = 0; i < self->error_list_size; i++) {
+	for (webvtt_uint i = 0; i < self->error_list_size; i++) {
 
-	    /* Try to add entry to the log file. */
-		if (fp) {
-			/* save to file */
-			fprintf(fp, "Error Code: %s %s: VTT File: %s Line: %d\n",
-				self->error_list[i].error_code, self->error_list[i].error_message, self->error_list[i].webvtt_file_name, self->error_list[i].webvtt_line_number);
-			/* print to stderr */
-			fprintf(stderr, "Error Code: %s %s: VTT File: %s Line: %d\n", 
-				self->error_list[i].error_code, self->error_list[i].error_message, self->error_list[i].webvtt_file_name, self->error_list[i].webvtt_line_number);
-		} else {
-			fprintf(stderr, "Error could not be logged!\n");
-		}
-
-		/* Deallocate the current Error Object in the list. */
-		free(self->error_list[i].error_code);
-		free(self->error_list[i].error_message);
-		free(self->error_list[i].webvtt_file_name);
+		/* print to stderr */
+		fprintf(stderr, "Error Code: %s %s: VTT File: %s Line: %d\n", 
+		self->error_list[i].error_code, self->error_list[i].error_message, self->error_list[i].webvtt_file_name, self->error_list[i].webvtt_line_number);
 	}
-	fclose(fp);
+}
+
+/* Destroys the webvtt error list in the webvtt_parser object and it's contents */
+
+void destroy_error_list(webvtt_parser self){
+	if (self->error_list){
+		for(webvtt_uint i = 0; i > self->error_list_size; i++) {
+			/* Deallocate the current Error Object in the list. */
+			free(self->error_list[i].error_code);
+			free(self->error_list[i].error_message);
+			free(self->error_list[i].webvtt_file_name);
+		}
+		free(self->error_list);
+		self->error_list_size = 0;
+	}
 }

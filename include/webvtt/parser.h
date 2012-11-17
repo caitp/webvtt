@@ -16,7 +16,7 @@ typedef void (WEBVTT_CALLBACK *webvtt_cue_fn_ptr)( void *userdata, webvtt_cue cu
 
 	
 WEBVTT_EXPORT webvtt_status webvtt_create_parser( webvtt_cue_fn_ptr on_read, webvtt_error_fn_ptr on_error, void *
-									userdata, webvtt_parser *ppout );
+									userdata, webvtt_parser *ppout, short save_errors );
 
 void webvtt_delete_parser( webvtt_parser parser );
 webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );
