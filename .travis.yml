@@ -1,0 +1,13 @@
+language: c
+
+compiler:
+  - clang
+  - gcc
+
+script: ./bootstrap.sh && ./configure && make
+
+notifications:
+  email:
+    - david.humphrey@senecacollege.ca
+
+  irc: "irc.mozilla.org#seneca"

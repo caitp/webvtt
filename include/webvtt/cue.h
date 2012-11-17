@@ -1,7 +1,7 @@
 #ifndef __WEBVTT_CUE_H__
 #	define __WEBVTT_CUE_H__
 #	include "util.h"
-#	include "string.h"
+#	include <webvtt/string.h>
 
 typedef struct webvtt_cue_t *webvtt_cue;
 typedef double webvtt_timestamp_t, webvtt_timestamp;

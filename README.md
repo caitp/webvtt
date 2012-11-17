@@ -5,6 +5,8 @@ audio and video elements.
 
 See: [W3C WebVTT Draft](http://dev.w3.org/html5/webvtt/)
 
+[![Build Status](https://travis-ci.org/humphd/webvtt.png)](https://travis-ci.org/humphd/webvtt)
+
 ##Build Instructions:
 
 In Unix-like environments, we use autotools:
