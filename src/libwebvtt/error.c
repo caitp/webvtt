@@ -1,9 +1,8 @@
-#include <webvtt/error.h>
-#include <webvtt/parser.h>
+
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include "parser.h"
+#include <stdio.h>
 
 /* List of common error messages that can be encountered in the parser.
  * Add more entries and use this array with the enum: webvtt_error in error.h
@@ -52,25 +51,27 @@ webvtt_strerror( webvtt_error errno )
 	}
 	return errstr[ errno ];
 }
-void create_error(webvtt_parser self, char *code, char *message, char *vtt, int vtt_line) {
+void create_error(webvtt_parser self, webvtt_error errno, char *vtt, webvtt_uint line_no) {
 	/* 
 	 * Create and initialize the error structure.
 	 * Error messages are represented with ASCII character strings
 	 */
-	vtt_error_t *er = (vtt_error_t *)malloc(sizeof(vtt_error_t));
-	er->error_code = (char *)malloc(sizeof(char) * strlen(code));
-	strcpy(er->error_code, code);
-	er->error_message = (char *)malloc(sizeof(char) * strlen(message));
-	strcpy(er->error_message, message);
+		 const char *err_message = webvtt_strerror(errno);
+		/* check to see if an associated error message was found */
+		if (err_message != "\0") {
+			vtt_error_t *er = (vtt_error_t *)malloc(sizeof(vtt_error_t));
+			er->error_message = (char *)malloc(sizeof(char) * strlen(err_message));
+			er->error_message = (char*)err_message;
 
-	if (vtt) {
-		er->webvtt_file_name = (char *)malloc(sizeof(char) * strlen(vtt));
-		strcpy(er->webvtt_file_name, vtt );
-	}
-	er->webvtt_line_number = vtt_line;
+			if (vtt) {
+				er->webvtt_file_name = (char *)malloc(sizeof(char) * strlen(vtt));
+				er->webvtt_file_name = vtt;
+			}
+			er->webvtt_line_number = line_no;
 
-	/* Add to the end of the error array. */
-	add_to_error_list(self, er);
+			/* Add to the end of the error array. */
+			add_to_error_list(self, er);
+		}
 }
 
 void add_to_error_list(webvtt_parser self, vtt_error_t *er) {
@@ -82,6 +83,9 @@ void add_to_error_list(webvtt_parser self, vtt_error_t *er) {
 		self->error_list[self->error_list_size] = *er;
 	}
 	self->error_list++;
+	/* free the dynamically allocated vtt_error_t instance (was allocated in create_error func) */
+	free(er);
+
 }
 /* Prints errors stored int he webvtt_parser structure to standard error. */
 void print_error_list(webvtt_parser self) {
@@ -89,8 +93,8 @@ void print_error_list(webvtt_parser self) {
 	for (webvtt_uint i = 0; i < self->error_list_size; i++) {
 
 		/* print to stderr */
-		fprintf(stderr, "Error Code: %s %s: VTT File: %s Line: %d\n", 
-		self->error_list[i].error_code, self->error_list[i].error_message, self->error_list[i].webvtt_file_name, self->error_list[i].webvtt_line_number);
+		fprintf(stderr, "Error Message: %s %s: VTT File: %s Line: %d\n", 
+			self->error_list[i].error_message, self->error_list[i].webvtt_file_name, self->error_list[i].webvtt_line_number);
 	}
 }
 
@@ -100,7 +104,6 @@ void destroy_error_list(webvtt_parser self){
 	if (self->error_list){
 		for(webvtt_uint i = 0; i > self->error_list_size; i++) {
 			/* Deallocate the current Error Object in the list. */
-			free(self->error_list[i].error_code);
 			free(self->error_list[i].error_message);
 			free(self->error_list[i].webvtt_file_name);
 		}

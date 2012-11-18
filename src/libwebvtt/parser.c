@@ -84,7 +84,7 @@ webvtt_create_parser( webvtt_cue_fn_ptr on_read,
 	p->userdata = userdata;
 	*ppout = p;
 	
-	/* Initialize error list */
+	/* Initialize error list upon request */
 	if (save_errors) {
 		p->error_list = (vtt_error_t *)malloc(sizeof(vtt_error_t));
 		p->error_list_size = 0;
@@ -157,6 +157,9 @@ webvtt_finish_parsing( webvtt_parser self )
 					 * Essentially, treat this as a parse error
 					 */
 					ERROR(WEBVTT_CUE_INCOMPLETE);
+					/* save error in the list of errors */
+					
+
 				}
 
 				break;
