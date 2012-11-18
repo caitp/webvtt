@@ -1,60 +1,13 @@
-#include <webvtt/parser.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
+#include "parsevtt.h"
 #include <ctype.h>
-
-static int WEBVTT_CALLBACK
-error( void *userdata, webvtt_uint line, webvtt_uint col, webvtt_error errcode )
-{
-	fprintf(stderr, "`%s' at %u:%u -- error: %s\n", (const char *)userdata, line, col, webvtt_strerror( errcode ) );
-	return -1; /* Die on all errors */
-}
-
-static void WEBVTT_CALLBACK 
-cue( void *userdata, webvtt_cue cue )
-{
-	webvtt_parse_cuetext( cue->payload->text, cue->node_head );
-}
-
-int
-parse_fh(FILE *fh, webvtt_parser vtt)
-{
-	/**
-	 * Try to parse the file.
-	 */
-	webvtt_status result;
-	do
-	{
-		char buffer[0x1000];
-		webvtt_uint n_read = (webvtt_uint)fread( buffer, 1, sizeof(buffer), fh );
-		if( !n_read && feof( fh ) ) 
-			break; /* Read the file successfully */
-		result = webvtt_parse_chunk( vtt, buffer, n_read );
-			
-		if( result == WEBVTT_PARSE_ERROR )
-		{
-			/**
-			 * TODO:
-			 * Acquire some detailed information from the parser (Line number in input file,
-			 * column number, specific error
-			 */
-			return 1;
-		}
-	} while( result == WEBVTT_SUCCESS );
-	if( webvtt_finish_parsing( vtt ) == WEBVTT_PARSE_ERROR )
-	{
-		return 1;
-	}
-	return 0;
-}
+#include <errno.h>
 
 int
 main( int argc, char **argv )
 {
 	const char *input_file = 0;
 	webvtt_status result;
-	webvtt_parser vtt;
+	parsevtt_t self;
 	FILE *fh;
 	int i;
 	int ret = 0;
@@ -98,30 +51,15 @@ main( int argc, char **argv )
 		return 1;
 	}
 	
-	fh = fopen(input_file,"rb");
-	if( !fh )
+
+	if( parsevtt_init( &self, input_file ) != WEBVTT_SUCCESS )
 	{
-		fprintf( stderr, "error: failed to open `%s'"
-#ifdef WEBVTT_HAVE_STRERROR
-		": %s"
-#endif
-		"\n", input_file
-#ifdef WEBVTT_HAVE_STRERROR
-		, strerror(errno)
-#endif
-		);
-		return 1;
+		ret = 1;
 	}
-	
-	if( ( result = webvtt_create_parser( &cue, &error, (void *)input_file, &vtt ,0) ) != WEBVTT_SUCCESS )
+	else
 	{
-		fprintf( stderr, "error: failed to create VTT parser.\n" );
-		fclose( fh );
-		return 1;
+		ret = ( parsevtt_parse_file( &self ) == WEBVTT_SUCCESS ? 0 : 1 );
 	}
-	
-	ret = parse_fh( fh, vtt );
-	webvtt_delete_parser( vtt );
-	fclose( fh );
+	parsevtt_cleanup( &self );
 	return ret;
 }

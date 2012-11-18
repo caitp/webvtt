@@ -58,46 +58,4 @@ webvtt_error_t
 
 WEBVTT_EXPORT const char *webvtt_strerror( webvtt_error errno);
 
-/* Represents an Error Logging Type and follows GNU style error logging standards:
- * http://www.gnu.org/prep/standards/html_node/Errors.html
- * These error standards are followed for source files and webVTT files.
- */
-
-typedef struct {
-
-	char *error_message;
-	webvtt_uint webvtt_line_number;
-	char *webvtt_file_name;
-
-	webvtt_uint column;
-} vtt_error_t;
-
-/* Forward declaration of the webvtt_parser_t struct */
-typedef struct webvtt_parser_t *webvtt_parser;
-
-/* 
- * Error functions. 
- * These functions are used when the DEBUG_MODE is set.
- * Create an Error instance and populate it with error information and add to the list.
- * takes in vtt file name and the line the error occured on.
- */
-void create_error(webvtt_parser self, webvtt_error errno, char *vtt, webvtt_uint line_no);
-
-/* 
- * Add an Error object to the end of the list. 
- */
-void add_to_error_list(webvtt_parser self, vtt_error_t *error);
-
-/* 
- * This function is meant to be called at the end of parser execution for displaying error information.
- * It also Formats and writes out errors to a log file called errorlog.txt.
- * Deallocate error object as its elements are written to the file and to stderr
- */
-void print_error_list(webvtt_parser self);
-
-/* 
- * Destroy an Error Objects and list
- */
-void destroy_error_list(webvtt_parser self);
-
 #endif

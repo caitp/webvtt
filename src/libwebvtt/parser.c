@@ -83,12 +83,6 @@ webvtt_create_parser( webvtt_cue_fn_ptr on_read,
 	p->line = 1;
 	p->userdata = userdata;
 	*ppout = p;
-	
-	/* Initialize error list upon request */
-	if (save_errors) {
-		p->error_list = (vtt_error_t *)malloc(sizeof(vtt_error_t));
-		p->error_list_size = 0;
-	}
 
 	return WEBVTT_SUCCESS;
 }
@@ -215,10 +209,7 @@ webvtt_delete_parser( webvtt_parser self )
 		if( self->cue )
 		{
 			webvtt_delete_cue( (webvtt_cue *)&self->cue );
-		}
-		/* Destroy the error list and the vtt_error_t instances it contains */
-		if (self->error_list)
-			destroy_error_list(self);		
+		}	
 
 		webvtt_free( self );
 	}
