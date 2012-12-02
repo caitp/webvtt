@@ -1,0 +1,16 @@
+﻿/**
+ * Test if parser fails if there are two newline characters (LF or CRLF) between cue id and cue timestamp
+ * 
+ * From http://dev.w3.org/html5/webvtt/#webvtt-cue-identifier (11/24/2012)
+ * A WebVTT cue identifier is any sequence of one or more characters not containing the substring "-->" 
+ * (U+002D HYPHEN-MINUS, U+002D HYPHEN-MINUS, U+003E GREATER-THAN SIGN), nor containing any U+000A LINE FEED (LF) 
+ * characters or U+000D CARRIAGE RETURN (CR) characters.
+ * 
+ * Note: A WebVTT cue identifier can be used to reference a specific cue, for example from script or CSS.
+ */
+WEBVTT
+
+1
+
+00:16.000 --> 00:18.000
+Payload
