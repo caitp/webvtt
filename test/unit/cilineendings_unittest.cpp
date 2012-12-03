@@ -18,7 +18,7 @@ TEST_F(CueIdLineEndings,MissingBetweenSignatureAndId)
 
   ASSERT_EQ( WEBVTT_EXPECTED_EOL, err.error() );
   ASSERT_EQ( 2, err.line() );
-  ASSERT_EQ( 1, err.column() );
+  ASSERT_EQ( 2, err.column() );
 }
 
 /**
@@ -38,7 +38,7 @@ TEST_F(CueIdLineEndings,TwoBetweenIdAndTimestamp)
 
   ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
   ASSERT_EQ( 4, err.line() );
-  ASSERT_EQ( 1, err.column() );
+  ASSERT_EQ( 0, err.column() );
 }
 
 /**
@@ -78,7 +78,7 @@ TEST_F(CueIdLineEndings,LongStringLF)
   loadVtt( "cue-ids/lineendings/long_string_lf.vtt" );
   const Error& err = getError( 0 );
 
-  ASSERT_EQ( WEBVTT_EXPECTED_TIMESTAMP, err.error() );
+  ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
   ASSERT_EQ( 4, err.line() );
   ASSERT_EQ( 1, err.column() );
 }
@@ -100,7 +100,7 @@ TEST_F(CueIdLineEndings,LongStringCRLF)
   loadVtt( "cue-ids/lineendings/long_string_crlf.vtt" );
   const Error& err = getError( 0 );
 
-  ASSERT_EQ( WEBVTT_ID_TRUNCATED, err.error() );
+  ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
   ASSERT_EQ( 4, err.line() );
   ASSERT_EQ( 1, err.column() );
 }
