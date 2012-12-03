@@ -33,7 +33,7 @@ TEST_F(CueIdGeneral,LongString)//Test throws 1 error, but should pass
 {
   loadVtt( "cue-ids/long_string.vtt" );
   const Error& err = getError( 0 );
-  ASSERT_EQ( WEBVTT_EXPECTED_TIMESTAMP, err.error() );
+  ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
 
   ASSERT_EQ( 0, errorCount() ) << "This file should contain no errors.";
 }
@@ -55,5 +55,5 @@ TEST_F(CueIdGeneral,IdOnly)
 
   ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
   ASSERT_EQ( 4, err.line() );
-  ASSERT_EQ( 1, err.column() );
+  ASSERT_EQ( 0, err.column() );
 }
