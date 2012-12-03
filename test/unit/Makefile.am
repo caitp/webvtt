@@ -37,7 +37,7 @@ CUEIDS_TESTS = \
   ciarrow_unittest \
   cigeneral_unittest \
   cilanguage_unittest \
-  cilinefeeds_unittest
+  cilineendings_unittest
 
 PAYLOAD_TESTS = \
   plboldtag_unittest \
@@ -97,7 +97,7 @@ cuetimes_unittest_SOURCES = cuetimes_unittest.cpp
 ciarrow_unittest_SOURCES = ciarrow_unittest.cpp
 cigeneral_unittest_SOURCES = cigeneral_unittest.cpp
 cilanguage_unittest_SOURCES = cilanguage_unittest.cpp
-cilinefeeds_unittest_SOURCES = cilinefeeds_unittest.cpp
+cilineendings_unittest_SOURCES = cilineendings_unittest.cpp
 
 #Payload Tests
 plboldtag_unittest_SOURCES = plboldtag_unittest.cpp
