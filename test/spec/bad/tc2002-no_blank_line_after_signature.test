@@ -1,9 +1,0 @@
-﻿/*
-WebVTT Spec Date: September 28, 2012
-Test for blank line after signature/before cue.
-This test should fail.
-*/
-WEBVTT
-->
-00:11.000 --> 00:13.000
-<v Roger Bingham>We are in New York City

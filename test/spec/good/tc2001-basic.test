@@ -1,9 +1,0 @@
-﻿/*
-WebVTT Spec Date: September 28, 2012
-Most basic cue test.
-This test should pass.
-*/
-WEBVTT
-
-1
-00:11.000 --> 00:13.000

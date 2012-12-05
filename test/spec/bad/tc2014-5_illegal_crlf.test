@@ -1,8 +1,0 @@
-﻿/*
-Test to determine how the parser reacts to multiple linefeed characters back to back.
-
-http://dev.w3.org/html5/webvtt/#webvtt-cue-identifier
-*/
-WEBVTT
-
-U+000DU+000AU+000DU+000AU+000DU+000AU+000DU+000AU+000DU+000A00:05.000 --> 00:10.000
