@@ -72,6 +72,163 @@ TEST_F(PayloadFormat,DISABLED_MultilineMultipleCueTextTag)
 }
 
 /*
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+ Relates to: 
+ Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+
+ correct Ampersand Character Escape : within a cue i tag
+*/
+TEST_F(PayloadFormat,DISABLED_Ampersand)
+{
+	loadVtt( "payload/escape-character/i-tag-with-ampersand.vtt", 1 );
+	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
+
+	String expectedText = String( (const byte *)"&amp;", 1 );
+	ASSERT_EQ( expectedText.text(), node->content().text() );
+}
+/*
+ Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+ Relates To:
+ Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ correct Ampersand Character Escape : cue b tag within a cue i tag
+*/
+TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+{
+	loadVtt( "payload/escape-character/i-tag-within-b-tag-with-ampersand.vtt", 1 );
+
+	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
+
+	String expectedText = String( (const byte *)"&amp;", 1 );
+	ASSERT_EQ( expectedText.text(), node->content().text() );
+}
+/*
+ Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+  Relates To:
+  Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ correct Ampersand Character Escape outside cue b tag within a cue i tag
+*/
+TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+{
+	loadVtt( "payload/escape-character/i-tag-within-b-tag-with-ampersand-outside.vtt", 1 );
+
+	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
+
+	String expectedText = String( (const byte *)"&amp;", 1 );
+	ASSERT_EQ( expectedText.text(), node->content().text() );
+}
+/*
+ Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+ Relates To:
+ Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ correct Ampersand Character Escape on new line after two encapsulated tags with class
+*/
+TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+{
+	loadVtt( "payload/escape-character/ampersand-outside-tag-on-newline-with-class.vtt", 1 );
+
+	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
+
+	String expectedText = String( (const byte *)"&amp;", 1 );
+	ASSERT_EQ( expectedText.text(), node->content().text() );
+}
+/*
+ Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+  Relates To:
+  Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ correct Ampersand Character Escape inside tag with a class
+*/
+TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+{
+	loadVtt( "payload/escape-character/ampersand-within-tag-with-class.vtt", 1 );
+		const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
+
+	String expectedText = String( (const byte *)"&amp;", 1 );
+	ASSERT_EQ( expectedText.text(), node->content().text() );
+}
+/*
+ WebVTT Specification Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+  Relates To:
+  Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ correct Ampersand Character Escape inside a tag with a subclass
+ and subclass
+*/
+TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+{
+	loadVtt( "payload/escape-character/ampersand-inside-tag-with-subclass.vtt", 1 );
+	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
+
+	String expectedText = String( (const byte *)"&amp;", 1 );
+	ASSERT_EQ( expectedText.text(), node->content().text() );
+}
+/*
+ WebVTT Specification Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+ Relates To:
+ Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ correct Ampersand Character Escape on line after a tag with a class
+ and subclass
+*/
+TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+{
+	loadVtt( "payload/escape-character/ampersand-inside-tag--with-subclass.vtt", 1 );
+	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
+
+	String expectedText = String( (const byte *)"&amp;", 1 );
+	ASSERT_EQ( expectedText.text(), node->content().text() );
+}
+/*
+ WebVTT Specification Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+  Relates To:
+  Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ correct Ampersand Character Escape on new line after a tag with a class
+ and subclass
+*/
+TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+{
+	loadVtt( "payload/escape-character/ampersand-outside-tag-on-newline-with-subclass.vtt", 1 );
+		const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
+
+	String expectedText = String( (const byte *)"&amp;", 1 );
+	ASSERT_EQ( expectedText.text(), node->content().text() );
+}
+/*
  * Verifies that cue text separated by a CR line terminator is parsed correctly.
  * From http://dev.w3.org/html5/webvtt/#webvtt-cue-text (12/02/2012)
  *	Cue text consists of one or more cue text components optionally separated by a single line terminator which can be: 
