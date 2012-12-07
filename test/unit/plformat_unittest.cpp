@@ -81,7 +81,7 @@ TEST_F(PayloadFormat,DISABLED_MultilineMultipleCueTextTag)
 
  correct Ampersand Character Escape : within a cue i tag
 */
-TEST_F(PayloadFormat,DISABLED_Ampersand)
+TEST_F(PayloadFormat,DISABLED_AmpersandWithinTag)
 {
 	loadVtt( "payload/escape-character/i-tag-with-ampersand.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -100,7 +100,7 @@ TEST_F(PayloadFormat,DISABLED_Ampersand)
  Description:
  correct Ampersand Character Escape : cue b tag within a cue i tag
 */
-TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+TEST_F(PayloadFormat,DISABLED_AmpersandWithinMultipleTags)
 {
 	loadVtt( "payload/escape-character/i-tag-within-b-tag-with-ampersand.vtt", 1 );
 
@@ -120,7 +120,7 @@ TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
  Description:
  correct Ampersand Character Escape outside cue b tag within a cue i tag
 */
-TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+TEST_F(PayloadFormat,DISABLED_AmpersandOutsideTwoTags)
 {
 	loadVtt( "payload/escape-character/i-tag-within-b-tag-with-ampersand-outside.vtt", 1 );
 
@@ -140,7 +140,7 @@ TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
  Description:
  correct Ampersand Character Escape on new line after two encapsulated tags with class
 */
-TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+TEST_F(PayloadFormat,DISABLED_AmpersandOnNewLineAfterTwoTagsWithClass)
 {
 	loadVtt( "payload/escape-character/ampersand-outside-tag-on-newline-with-class.vtt", 1 );
 
@@ -160,7 +160,7 @@ TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
  Description:
  correct Ampersand Character Escape inside tag with a class
 */
-TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+TEST_F(PayloadFormat,DISABLED_AmpersandInsideOneTagWithClass)
 {
 	loadVtt( "payload/escape-character/ampersand-within-tag-with-class.vtt", 1 );
 		const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -180,7 +180,7 @@ TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
  correct Ampersand Character Escape inside a tag with a subclass
  and subclass
 */
-TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+TEST_F(PayloadFormat,DISABLED_AmpersandInsideTagWithSubclasses)
 {
 	loadVtt( "payload/escape-character/ampersand-inside-tag-with-subclass.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -200,7 +200,7 @@ TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
  correct Ampersand Character Escape on line after a tag with a class
  and subclass
 */
-TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+TEST_F(PayloadFormat,DISABLED_AmpersandOnLineWithClassAndSubClass)
 {
 	loadVtt( "payload/escape-character/ampersand-inside-tag--with-subclass.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -220,7 +220,7 @@ TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
  correct Ampersand Character Escape on new line after a tag with a class
  and subclass
 */
-TEST_F(PayloadFormat,DISABLED_MultilineMultipleEscapeCharacter)
+TEST_F(PayloadFormat,DISABLED_AmpersandOnNewlineWithClassAndSubclass)
 {
 	loadVtt( "payload/escape-character/ampersand-outside-tag-on-newline-with-subclass.vtt", 1 );
 		const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();

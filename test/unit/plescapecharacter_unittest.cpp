@@ -126,7 +126,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_MultilineMultipleEscapeCharacter)
  Incorrect Space Character Escape : '&nsp;' instead of '&nbsp;'
  Expected Output: '&nsp;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_NSP)
 {
 	loadVtt( "payload/escape-character/space-character-escape-nsp.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -146,7 +146,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  The Parser currently allows incorrect escapes to be outputted in the cue text string
  Expected Output: '&nbp'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_NBP)
 {
 	loadVtt( "payload/escape-character/space-character-escape-nbp.vtt", 1 );
 
@@ -168,7 +168,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&bsp;' instead of '&nbsp;'
  Expected Output: '&bsp;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_BSP)
 {
 	loadVtt( "payload/escape-character/space-character-escape-bsp.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -188,7 +188,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&bp;' instead of '&nbsp;'
  Expected Output: '&bp;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_BP)
 {
 	loadVtt( "payload/escape-character/space-character-escape-bp.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -209,7 +209,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&b;' instead of '&nbsp;'
  Expected Output: '&b;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_B)
 {
 	loadVtt( "payload/escape-character/space-character-escape-b.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -229,7 +229,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&s;' instead of '&nbsp;'
  Expected Output: '&s;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_S)
 {
 	loadVtt( "payload/escape-character/space-character-escape-bsp.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -249,7 +249,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&ns;' instead of '&nbsp;'
  Expected Output: '&ns;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_NS)
 {
 	loadVtt( "payload/escape-character/space-character-escape-ns.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -269,7 +269,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&np;' instead of '&nbsp;'
  Expected Output: '&np;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_NP)
 {
 	loadVtt( "payload/escape-character/space-character-escape-np.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -289,7 +289,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&sp;' instead of '&nbsp;'
  Expected Output: '&sp;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_SP)
 {
 	loadVtt( "payload/escape-character/space-character-escape-sp.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -309,7 +309,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&p;' instead of '&nbsp;'
  Expected Output: '&p;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_P)
 {
 	loadVtt( "payload/escape-character/space-character-escape-p.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -329,7 +329,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&bs;' instead of '&nbsp;'
  Expected Output: '&bs;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_BS)
 {
 	loadVtt( "payload/escape-character/space-character-escape-bs.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -369,7 +369,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
  Incorrect Left to Right Character Escape : '&l;' instead of '&lrm;'
  Expected Output: '&l;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
+TEST_F(PayloadEscapeCharacter,DISABLED_L)
 {
 	loadVtt( "payload/escape-character/left-to-right-character-escape-l.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -389,7 +389,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
  Incorrect Left to Right Character Escape : '&lm;' instead of '&lrm;'
  Expected Output: '&lm;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
+TEST_F(PayloadEscapeCharacter,DISABLED_LM)
 {
 	loadVtt( "payload/escape-character/left-to-right-character-escape-lm.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -409,7 +409,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
  Incorrect Left to Right Character Escape : '&rm;' instead of '&lrm;'
  Expected Output: '&rm;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
+TEST_F(PayloadEscapeCharacter,DISABLED_RM)
 {
 	loadVtt( "payload/escape-character/left-to-right-character-escape-rm.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -429,7 +429,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
  Incorrect Left to Right Character Escape : '&m;' instead of '&lrm;'
  Expected Output: '&m;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
+TEST_F(PayloadEscapeCharacter,DISABLED_M)
 {
 	loadVtt( "payload/escape-character/left-to-right-character-escape-m.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -449,7 +449,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
  Incorrect Left to Right Character Escape : '&r;' instead of '&lrm;'
  Expected Output: '&r;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
+TEST_F(PayloadEscapeCharacter,DISABLED_R)
 {
 	loadVtt( "payload/escape-character/left-to-right-character-escape-r.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -469,7 +469,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
  Incorrect Left to Right Character Escape : '&lm;' instead of '&lrm;'
  Expected Output: '&lm;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
+TEST_F(PayloadEscapeCharacter,DISABLED_LM_LeftToRight)
 {
 	loadVtt( "payload/escape-character/left-to-right-character-escape-lm.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -489,7 +489,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
  Incorrect Left to Right Character Escape : '&rl;' instead of '&lrm;'
  Expected Output: '&rl;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
+TEST_F(PayloadEscapeCharacter,DISABLED_RL)
 {
 	loadVtt( "payload/escape-character/left-to-right-character-escape-rl.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -508,7 +508,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LeftToRight)
  Description:
  Expected Output: '&'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
+TEST_F(PayloadEscapeCharacter,DISABLED_AmpersandCharacter)
 {
 	loadVtt( "payload/escape-character/ampersand-character-escape.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -528,7 +528,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
  Incorrect Ampersand Escape : '&a;' instead of '&amp;'
  Expected Output: '&a;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
+TEST_F(PayloadEscapeCharacter,DISABLED_A)
 {
 	loadVtt( "payload/escape-character/ampersand-character-escape-a.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -548,7 +548,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
  Incorrect Ampersand Escape : '&am;' instead of '&amp;'
  Expected Output: '&am;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
+TEST_F(PayloadEscapeCharacter,DISABLED_AM)
 {
 	loadVtt( "payload/escape-character/ampersand-character-escape-a.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -568,7 +568,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
  Incorrect Ampersand Escape : '&mp;' instead of '&amp;'
  Expected Output: '&mp;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
+TEST_F(PayloadEscapeCharacter,DISABLED_MP)
 {
 	loadVtt( "payload/escape-character/ampersand-character-escape-mp.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -588,7 +588,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
  Incorrect Ampersand Escape : '&p;' instead of '&amp;'
  Expected Output: '&p;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
+TEST_F(PayloadEscapeCharacter,DISABLED_P_Ampersand)
 {
 	loadVtt( "payload/escape-character/ampersand-character-escape-p.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -608,7 +608,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
  Incorrect Ampersand Escape : '&ap;' instead of '&amp;'
  Expected Output: '&ap;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_Ampersand)
+TEST_F(PayloadEscapeCharacter,DISABLED_AP)
 {
 	loadVtt( "payload/escape-character/ampersand-character-escape-ap.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -648,7 +648,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_LessThan)
  Incorrect Less Than Escape : '&t;' instead of '&lt;'
  Expected Output: '&t;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_LessThan)
+TEST_F(PayloadEscapeCharacter,DISABLED_T)
 {
 	loadVtt( "payload/escape-character/less-than-character-escape-t.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -688,7 +688,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_GreaterThan)
  Incorrect Space Character Escape : '&nbs;' instead of '&nbsp;'
  Expected Output: '&nbs;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_NBS)
 {
 	loadVtt( "payload/escape-character/space-character-escape-nbs.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -708,7 +708,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&nb;' instead of '&nbsp;'
  Expected Output: '&nb;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_NB)
 {
 	loadVtt( "payload/escape-character/space-character-escape-nb.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
@@ -728,7 +728,7 @@ TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
  Incorrect Space Character Escape : '&n;' instead of '&nbsp;'
  Expected Output: '&n;'
 */
-TEST_F(PayloadEscapeCharacter,DISABLED_NBSP)
+TEST_F(PayloadEscapeCharacter,DISABLED_N)
 {
 	loadVtt( "payload/escape-character/space-character-escape-n.vtt", 1 );
 	const TextNode *node = getHeadOfCue( 0 )->child( 0 )->toTextNode();
