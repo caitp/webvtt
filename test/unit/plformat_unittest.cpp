@@ -192,9 +192,9 @@ TEST_F(PayloadFormat,DISABLED_AmpersandOnNewLineAfterTwoTagsWithClass)
 	ASSERT_EQ(Node::Italic, italicTag->kind() );
 
 	/* verify class inside italic tag*/
-	const StringList cssClass = getHeadOfCue(0)->child(0)->toInternalNode()->cssClasses();
+	StringList cssClass = getHeadOfCue(0)->child(0)->toInternalNode()->cssClasses();
 	String cssClassExpected = String((const byte *)"class",5);
-	ASSERT_EQ(cssClassExpected,cssClass);
+	ASSERT_EQ(cssClassExpected.text(),cssClass.stringAtIndex(0).text());
 
 	/* verify the escape character text within i tag */
 	const TextNode *textNode = getHeadOfCue( 0 )->child( 1 )->toTextNode();
@@ -224,7 +224,7 @@ TEST_F(PayloadFormat,DISABLED_AmpersandInsideOneTagWithClass)
 	/* verify class inside italic tag*/
 	StringList cssClass = getHeadOfCue(0)->child(0)->toInternalNode()->cssClasses();
 	String cssClassExpected = String((const byte *)"class",5);
-	ASSERT_EQ(cssClassExpected.text(),cssClass.stringAtIndex(0),1);
+	ASSERT_EQ(cssClassExpected.text(),cssClass.stringAtIndex(0).text());
 	
 	/* verify escape character text within i tag */
 	const TextNode *textNode = getHeadOfCue( 0 )->child( 0 )->toInternalNode()->child( 0 )->toTextNode();
