@@ -202,6 +202,71 @@ TEST_F(PayloadFormat,DISABLED_AmpersandOnNewLineAfterTwoTagsWithClass)
 	ASSERT_EQ( expectedText.text(), textNode->content().text() );
 }
 /*
+ WebVTT Specification Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+  Relates To:
+  Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ Cue Text To be Parsed: <i.class.subclass> Some Filler Text </i> &amp; 
+ correct Ampersand Character Escape on line outsidetag with a class
+ and subclass
+*/
+TEST_F(PayloadFormat,DISABLED_AmpersandOnCurrlineWithClassAndSubclass)
+{
+	loadVtt( "payload/escape-character/ampersand-outside-tag-on-newline-with-subclass.vtt", 1 );
+	
+	/* verify italic tag */
+	const InternalNode *italicTag = getHeadOfCue(0);
+	ASSERT_EQ(Node::Italic, italicTag->kind() );
+
+	/* verify class inside italic tag*/
+	StringList cssClass = getHeadOfCue(0)->child(0)->toInternalNode()->cssClasses();
+	String cssClassExpected = String((const byte *)"class",5);
+	ASSERT_EQ(cssClassExpected.text(),cssClass.stringAtIndex(0).text());
+
+	/* verify subclass within the i tag */
+	String cssSubClassExpected = String((const byte *)"subclass",8);
+	ASSERT_EQ(cssSubClassExpected.text(),cssClass.stringAtIndex(1).text());
+	
+	/* verify character escape outside i tag */
+	const TextNode *textNode = getHeadOfCue( 0 )->child( 1 )->toTextNode();
+	String expectedText = String( (const byte *)" &amp;", 6 );
+	ASSERT_EQ( expectedText.text(), textNode->content().text() );
+}
+/*
+ WebVTT Specification Version:
+ WebVTT - Living Standard Last Updated 2 October 2012
+ 
+  Relates To:
+  Cue Text Escape Characters and Cue Text Tags: 
+ http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+ 
+ Description:
+ Cue Text To be Parsed: <i.class> Some Filler Text </i> &amp; 
+ correct Ampersand Character Escape on line outsidetag with a class
+ and subclass
+*/
+TEST_F(PayloadFormat,DISABLED_AmpersandOnCurrlineWithClass)
+{
+	loadVtt( "payload/escape-character/ampersand-outside-tag-on-newline-with-subclass.vtt", 1 );
+	
+	/* verify italic tag */
+	const InternalNode *italicTag = getHeadOfCue(0);
+	ASSERT_EQ(Node::Italic, italicTag->kind() );
+
+	/* verify class inside italic tag*/
+	StringList cssClass = getHeadOfCue(0)->child(0)->toInternalNode()->cssClasses();
+	String cssClassExpected = String((const byte *)"class",5);
+	ASSERT_EQ(cssClassExpected.text(),cssClass.stringAtIndex(0).text());
+	
+	/* verify character escape outside i tag */
+	const TextNode *textNode = getHeadOfCue( 0 )->child( 1 )->toTextNode();
+	String expectedText = String( (const byte *)" &amp;", 6 );
+	ASSERT_EQ( expectedText.text(), textNode->content().text() );
+}/*
  Version:
  WebVTT - Living Standard Last Updated 2 October 2012
  
@@ -240,30 +305,26 @@ TEST_F(PayloadFormat,DISABLED_AmpersandInsideOneTagWithClass)
  http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
  
  Description:
- Cue Text to be Parsed: <i.class.subclass> ampersand escape: &amp; </i> 
- correct Ampersand Character Escape inside a tag with a subclass
- and subclass
+ Cue Text to be Parsed: 
+ <b><i> some filler text </i></b> 
+ &amp;
+ correct Ampersand Character Escape outside two encapsulates tags
 */
 TEST_F(PayloadFormat,DISABLED_AmpersandInsideTagWithSubclasses)
 {
-	loadVtt( "payload/escape-character/ampersand-inside-tag-with-subclass.vtt", 1 );
+	loadVtt( "payload/escape-character/ampersand-outside-encapsulated-tags.vtt", 1 );
 
-	/* verify italic tag */
-	const InternalNode *italicTag = getHeadOfCue(0);
+	/* verify bold tag */
+	const InternalNode *boldTag = getHeadOfCue(0);
+	ASSERT_EQ(Node::Bold, boldTag->kind() );
+
+	/* verify italic tag within bold tag */
+	const InternalNode *italicTag = getHeadOfCue(0)->child(0)->toInternalNode();
 	ASSERT_EQ(Node::Italic, italicTag->kind() );
 
-	/* verify class inside italic tag*/
-	StringList cssClass = getHeadOfCue(0)->child(0)->toInternalNode()->cssClasses();
-	String cssClassExpected = String((const byte *)"class",5);
-	ASSERT_EQ(cssClassExpected.text(),cssClass.stringAtIndex(0).text());
-
-	/* verify subclass within the i tag */
-	String cssSubClassExpected = String((const byte *)"subclass",8);
-	ASSERT_EQ(cssSubClassExpected.text(),cssClass.stringAtIndex(1).text());
-
-	/* verify escape character text within i tag */
-	const TextNode *textNode = getHeadOfCue( 0 )->child( 0 )->toInternalNode()->child(0)->toTextNode();
-	String expectedText = String( (const byte *)" ampersand escape: &amp; ", 25 );
+	/* verify character escape outside i tag */
+	const TextNode *textNode = getHeadOfCue( 0 )->child( 1 )->toTextNode();
+	String expectedText = String( (const byte *)"&amp;", 5 );
 	ASSERT_EQ( expectedText.text(), textNode->content().text() );
 }
 /*
