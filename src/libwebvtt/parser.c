@@ -901,6 +901,15 @@ _recheck:
 				PUSH0(T_EOL,1,V_INTEGER);
 				break;
 			}
+			/**
+			 * If the end of file was encountered here,
+			 * we shouldn't consider it an error. that would be silly!
+			 */
+			else if( token == END_OF_FILE )
+			{
+				POP();
+				goto _finish;
+			}
 			else
 			{
 				/**
@@ -969,6 +978,10 @@ _recheck:
 		case T_BODY:
 			if( self->popped && FRAMEUP(1)->state == T_EOL )
 			{ 
+				if( token == END_OF_FILE )
+				{
+					goto _finish;
+				}
 				if( FRAMEUP(1)->v.value < 2 )
 				{
 					ERROR_AT_COLUMN( WEBVTT_EXPECTED_EOL, 1 );
@@ -1121,7 +1134,12 @@ _recheck:
 		 */
 		self->token_pos = 0;
 	}
-
+	
+	if( finish && token != END_OF_FILE )
+	{
+		token = END_OF_FILE;
+		goto _recheck;
+	}
 
 _finish:
 	if( status == WEBVTT_OUT_OF_MEMORY )
@@ -1186,6 +1204,7 @@ read_cuetext( webvtt_parser self, const webvtt_byte *b, webvtt_uint *ppos, webvt
 			}
 		}
 	} while( pos < len && !finished );
+	
 _finish:
 	*ppos = pos;
 	return status;

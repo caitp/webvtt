@@ -48,12 +48,9 @@ TEST_F(CueIdGeneral,DISABLED_LongString)//Test currently throws a webvtt cue inc
  * 
  * Note: A WebVTT cue identifier can be used to reference a specific cue, for example from script or CSS.
  */
-TEST_F(CueIdGeneral,IdOnly)
+TEST_F(CueIdGeneral,DISABLED_IdOnly)
 {
-  loadVtt( "cue-ids/id_only.vtt" );
-  const Error& err = getError( 0 );
-
-  ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
-  ASSERT_EQ( 4, err.line() );
-  ASSERT_EQ( 0, err.column() );
+  loadVtt( "cue-ids/id_only.vtt", 0 );
+  ASSERT_EQ( 1, errorCount() );
+  assertEquals( getError( 0 ), WEBVTT_CUE_INCOMPLETE, 4, 1 );
 }

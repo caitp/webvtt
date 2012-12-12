@@ -13,12 +13,9 @@ class CueIdLineEndings : public CueTest { };
  */
 TEST_F(CueIdLineEndings,MissingBetweenSignatureAndId)
 {
-  loadVtt( "cue-ids/lineendings/missing_between_signature_and_Id.vtt" );
-  const Error& err = getError( 0 );
-
-  ASSERT_EQ( WEBVTT_EXPECTED_EOL, err.error() );
-  ASSERT_EQ( 2, err.line() );
-  ASSERT_EQ( 2, err.column() );
+  loadVtt( "cue-ids/lineendings/missing_between_signature_and_Id.vtt", 1 );
+  ASSERT_EQ( 1, errorCount() );
+  assertEquals( getError( 0 ), WEBVTT_EXPECTED_EOL, 2, 1 );
 }
 
 /**
@@ -31,14 +28,11 @@ TEST_F(CueIdLineEndings,MissingBetweenSignatureAndId)
  * 
  * Note: A WebVTT cue identifier can be used to reference a specific cue, for example from script or CSS.
  */
-TEST_F(CueIdLineEndings,TwoBetweenIdAndTimestamp)
+TEST_F(CueIdLineEndings,DISABLED_TwoBetweenIdAndTimestamp)
 {
-  loadVtt( "cue-ids/lineendings/two_between_id_and_timestamp.vtt" );
-  const Error& err = getError( 0 );
-
-  ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
-  ASSERT_EQ( 4, err.line() );
-  ASSERT_EQ( 0, err.column() );
+  loadVtt( "cue-ids/lineendings/two_between_id_and_timestamp.vtt", 1 );
+  ASSERT_EQ( 1, errorCount() );
+  assertEquals( getError( 0 ), WEBVTT_CUE_INCOMPLETE, 4, 1 );
 }
 
 /**
@@ -53,12 +47,9 @@ TEST_F(CueIdLineEndings,TwoBetweenIdAndTimestamp)
  */
 TEST_F(CueIdLineEndings,DISABLED_MissingBetweenPayloadAndId)//This parses for eternity until program is stopped, no error available
 {
-  loadVtt( "cue-ids/lineendings/missing_between_payload_and_id.vtt" );
-  const Error& err = getError( 0 );
-
-  ASSERT_EQ( WEBVTT_ID_TRUNCATED, err.error() );
-  ASSERT_EQ( 6, err.line() );
-  ASSERT_EQ( 1, err.column() );
+  loadVtt( "cue-ids/lineendings/missing_between_payload_and_id.vtt", 2 );
+  ASSERT_EQ( 1, errorCount() );
+  assertEquals( getError( 0 ), WEBVTT_EXPECTED_EOL, 6, 1 );
 }
 
 /**
@@ -75,12 +66,8 @@ TEST_F(CueIdLineEndings,DISABLED_MissingBetweenPayloadAndId)//This parses for et
  */
 TEST_F(CueIdLineEndings,LongStringLF)
 {
-  loadVtt( "cue-ids/lineendings/long_string_lf.vtt" );
-  const Error& err = getError( 0 );
-
-  ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
-  ASSERT_EQ( 4, err.line() );
-  ASSERT_EQ( 0, err.column() );
+  loadVtt( "cue-ids/lineendings/long_string_lf.vtt", 1 );
+  ASSERT_EQ( 0, errorCount() );
 }
 
 /**
@@ -97,10 +84,6 @@ TEST_F(CueIdLineEndings,LongStringLF)
  */
 TEST_F(CueIdLineEndings,LongStringCRLF)
 {
-  loadVtt( "cue-ids/lineendings/long_string_crlf.vtt" );
-  const Error& err = getError( 0 );
-
-  ASSERT_EQ( WEBVTT_CUE_INCOMPLETE, err.error() );
-  ASSERT_EQ( 4, err.line() );
-  ASSERT_EQ( 0, err.column() );
+  loadVtt( "cue-ids/lineendings/long_string_crlf.vtt", 1 );
+  ASSERT_EQ( 0, errorCount() );
 }

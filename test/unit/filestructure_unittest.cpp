@@ -20,7 +20,7 @@ class FileStructure : public CueTest { };
 TEST_F(FileStructure,WebVTTNoBOM)
 {
 	loadVtt( "filestructure/webvtt-no-bom.vtt", 0 );
-	ASSERT_EQ( 0, errorCount() ) << "This file should contain no errors.";
+	ASSERT_EQ( 0, errorCount() ) << "This file should contain no errors";
 }
 
 /*
@@ -38,7 +38,7 @@ TEST_F(FileStructure,WebVTTNoBOM)
 TEST_F(FileStructure,WebVTTWithBOM)
 {
 	loadVtt( "filestructure/webvtt-with-bom.vtt", 0 );
-	ASSERT_EQ( 0, errorCount() ) << "This file should contain no errors.";
+	ASSERT_EQ( 0, errorCount() ) << "This file should contain no errors";
 }
 
 /*
@@ -245,6 +245,6 @@ TEST_F(FileStructure,NoPayloadText)
 TEST_F(FileStructure,MissingCueIdentifier)
 {
 	loadVtt( "filestructure/missing-cue-identifier.vtt", 0 );
-	ASSERT_EQ( 1, errorCount() ) << "This file should contain 1 error.";
+	ASSERT_EQ( 1, errorCount() ) << "This file should contain no errors";
 	assertEquals( getError( 0 ), WEBVTT_CUE_INCOMPLETE, 3, 13 );
 }
