@@ -1036,14 +1036,21 @@ _recheck:
 				webvtt_state *st = FRAMEUP(1);
 				webvtt_bytearray text = st->v.text;
 
-				st->type = V_NONE;
-				st->v.value = 0;
-
 				/**
 				 * The type should be V_TEXT. If it's not, somethings wrong.
 				 *
 				 * TODO: Add debug assertion
 				 */
+				if( st->type != V_TEXT )
+				{
+					printf( "\n\n***ERROR: NEED V_TEXT***\n\n" );
+					self->popped = 0;
+					continue;
+				}
+				
+				st->type = V_NONE;
+				st->v.value = 0;
+
 				if( find_bytes( text->text, text->length, separator_token, 
 					separator_token_size ) )
 				{
