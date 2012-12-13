@@ -1,6 +1,7 @@
 #include "parser_internal.h"
 #include "cue_internal.h"
 #include <string.h>
+#include <stdio.h>
 
 #define _ERROR(X) do { if( skip_error == 0 ) { ERROR(X); } } while(0)
 
@@ -805,6 +806,14 @@ _next:
 		{
 			int v;
 			webvtt_uint old_pos = pos;
+			if( SP->type != V_TEXT )
+			{
+				printf("\n\n***ERROR: STATE DATA TYPE != V_TEXT, V_TEXT EXPECTED***\n\n");
+				*(0x00000000) = 28;
+				SP->v.cue = 0;
+				webvtt_bytearray_create( 0x100, &SP->v.text );
+				SP->type = V_TEXT;
+			}
 			if( v = webvtt_bytearray_getline( &SP->v.text, buffer, &pos, 
 					len, 0, finish ) )
 			{
