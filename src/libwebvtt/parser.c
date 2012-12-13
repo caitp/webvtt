@@ -16,6 +16,14 @@
 #define  ASCII_GT     (0x3E)
 
 /**
+ * Text for a separator token, now NULL-terminated for gdb's pleasure.
+ */
+static const webvtt_byte separator_token[] = { 
+	ASCII_DASH, ASCII_DASH, ASCII_GT, 0
+};
+static const webvtt_uint separator_token_size = 3;
+
+/**
  * parser modes
  */
 enum
@@ -1018,9 +1026,6 @@ _recheck:
 				webvtt_cue cue = SP->v.cue;
 				webvtt_state *st = FRAMEUP(1);
 				webvtt_bytearray text = st->v.text;
-				static const webvtt_byte separator[] = { 
-					ASCII_DASH, ASCII_DASH, ASCII_GT
-				};
 
 				st->type = V_NONE;
 				st->v.value = 0;
@@ -1030,8 +1035,8 @@ _recheck:
 				 *
 				 * TODO: Add debug assertion
 				 */
-				if( find_bytes( text->text, text->length, separator, 
-					sizeof(separator) ) )
+				if( find_bytes( text->text, text->length, separator_token, 
+					separator_token_size ) )
 				{
 					/* It's not a cue id, we found '-->'. It can't be a second
 					   cueparams line, because if we had it, we would be in
@@ -1248,7 +1253,6 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len, web
 				int ret;
 				if( ( ret = webvtt_bytearray_getline( &self->line_buffer, b, &pos, len, &self->truncate, finished ) ) )
 				{
-					static const webvtt_byte separator[] = { ASCII_DASH, ASCII_DASH, ASCII_GT };
 					if( ret < 0 )
 					{
 						ERROR(WEBVTT_ALLOCATION_FAILED);
