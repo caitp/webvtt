@@ -809,7 +809,7 @@ _next:
 			if( SP->type != V_TEXT )
 			{
 				printf("\n\n***ERROR: STATE DATA TYPE != V_TEXT, V_TEXT EXPECTED***\n\n");
-				*(0x00000000) = 28;
+				*((webvtt_byte *)0x00000000) = 28;
 				SP->v.cue = 0;
 				webvtt_bytearray_create( 0x100, &SP->v.text );
 				SP->type = V_TEXT;
