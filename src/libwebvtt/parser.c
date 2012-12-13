@@ -811,7 +811,7 @@ _next:
 				printf("\n\n***ERROR: STATE DATA TYPE != V_TEXT, V_TEXT EXPECTED***\n\n");
 				*((webvtt_byte *)0x00000000) = 28;
 				SP->v.cue = 0;
-				webvtt_bytearray_create( 0x100, &SP->v.text );
+				webvtt_create_bytearray( 0x100, &SP->v.text );
 				SP->type = V_TEXT;
 			}
 			if( v = webvtt_bytearray_getline( &SP->v.text, buffer, &pos, 
