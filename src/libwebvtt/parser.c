@@ -1160,7 +1160,7 @@ read_cuetext( webvtt_parser self, const webvtt_byte *b, webvtt_uint *ppos, webvt
 				goto _finish;
 			}
 			
-			if( self->line_buffer->text[ self->line_buffer->length - 1 ] == ASCII_LF )
+			if( self->line_buffer->length == 0 || self->line_buffer->text[ self->line_buffer->length - 1 ] == ASCII_LF )
 			{
 				/**
 				 * finished
