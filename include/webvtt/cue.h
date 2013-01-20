@@ -98,12 +98,7 @@ webvtt_node_t {
     webvtt_string text;
     webvtt_timestamp timestamp;
     struct webvtt_internal_node_data_t *internal_data;
-  }
-# if !WEBVTT_CPLUSPLUS
-  /* Most versions of C do not support unnamed unions. Only using this for C++ */
-  data
-# endif
-  ;
+  } data;
 } webvtt_node;
 
 typedef struct

@@ -191,8 +191,8 @@ extern "C" {
     return WEBVTT_ATOMIC_DEC(ref->value);
   }
 # else
-#   define webvtt_ref(ref) ( WEBVTT_ATOMIC_INC((ref)->value) )
-#   define webvtt_deref(ref) ( WEBVTT_ATOMIC_DEC((ref)->value) )
+#   define webvtt_inc_ref(ref) ( WEBVTT_ATOMIC_INC((ref)->value) )
+#   define webvtt_dec_ref(ref) ( WEBVTT_ATOMIC_DEC((ref)->value) )
 # endif
 
 #if defined(__cplusplus) || defined(c_plusplus)

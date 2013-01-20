@@ -208,13 +208,15 @@ webvtt_delete_node( webvtt_node *node )
 WEBVTT_INTERN webvtt_status
 webvtt_attach_internal_node( webvtt_node *current, webvtt_node *to_attach )
 {
+  webvtt_node **arr, **old;
+
   if( !current || !to_attach ) {
     return WEBVTT_INVALID_PARAM;
   }
 
   if( current->data.internal_data->length + 1 >= ( current->data.internal_data->alloc / 3 ) * 2 ) {
     webvtt_node **arr = 0;
-	webvtt_node **old = 0;
+	  webvtt_node **old = 0;
     current->data.internal_data->alloc = current->data.internal_data->alloc ? current->data.internal_data->alloc * 2 : 8;
     *arr = (webvtt_node *)webvtt_alloc0( sizeof(webvtt_node) * (current->data.internal_data->alloc));
 

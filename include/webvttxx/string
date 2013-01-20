@@ -83,10 +83,9 @@ private:
 class StringList
 {
 public:
-  inline StringList() : stringList( 0 ) { }
 
-  inline StringList( webvtt_stringlist *other ) : stringList( other ) {
-  }
+  inline StringList() : stringList( 0 ) { }
+  inline StringList( webvtt_stringlist *other ) : stringList( other ) {}
 
   inline String operator[]( uint i ) const
   {
