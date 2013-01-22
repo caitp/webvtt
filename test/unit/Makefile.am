@@ -10,6 +10,14 @@ AM_CPPFLAGS = \
 AM_CXXFLAGS = $(AM_CPPFLAGS) $(CXXFLAGS)
 AM_LDFLAGS = -static -lm
 
+# Add subdirectories containing test files here:
+EXTRA_DIST = \
+  cue-ids \
+  cue-settings \
+  cue-times \
+  filestructure \
+  payload
+
 LIBS = \
   $(top_builddir)/src/libwebvtt/libwebvtt-static.la \
   $(top_builddir)/src/libwebvttxx/libwebvttxx-static.la \
