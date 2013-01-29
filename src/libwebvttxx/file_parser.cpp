@@ -25,8 +25,8 @@ bool
 FileParser::parse()
 {
   bool final = false;
-  ::webvtt_status status;
-  char buffer[0x1000];
+  ::webvtt_status status = WEBVTT_SUCCESS;
+  char buffer[0x1000] = { '\0' };
   if( !reader.good() ) {
     return false;
   }
