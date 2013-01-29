@@ -163,13 +163,22 @@ extern "C" {
 #define WEBVTT_FAILED(status) ( (status) != WEBVTT_SUCCESS )
 
   struct
-      webvtt_refcount_t {
+  webvtt_refcount_t {
 # if WEBVTT_OS_WIN32
+    /**
+     * 'long' on windows in order to coincide with
+     * the _Interlocked compiler intrinsics on win32
+     */
     long value;
 # else
     int value;
 # endif
   };
+
+# ifdef WEBVTT_REF_INIT
+#   undef WEBVTT_REF_INIT
+# endif
+# define WEBVTT_REF_INIT(Value) { (Value) }
 
   /**
    * TODO: Replace these with atomic instructions for systems that provide it
