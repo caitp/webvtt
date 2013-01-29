@@ -245,8 +245,14 @@ WEBVTT_INTERN int
 find_bytes( const webvtt_byte *buffer, webvtt_uint len, const webvtt_byte *sbytes, webvtt_uint slen )
 {
   webvtt_uint slen2 = slen - 1;
+  
+  /* Safety check (Should not be necessary!) */
+  if( !buffer || !sbytes || len == 0 || slen == 0 ) {
+    return 0;
+  }
+
   do {
-    if( *buffer == *sbytes && memcmp( buffer + 1, sbytes + 1, slen2 ) == 0 ) {
+    if( ( *buffer == *sbytes ) && memcmp( buffer + 1, sbytes + 1, slen2 ) == 0 ) {
       return 1;
     }
   } while( len-- >= slen && *buffer++ );
