@@ -108,13 +108,13 @@
 #define END_STATE DEFAULT BACKUP return BADTOKEN; } } break;
 #define END_STATE_EX } } break;
 
-#define BACKUP (*pos)--; --self->column; self->token[--self->token_pos] = 0; self->tstate = T_INITIAL;
+#define BACKUP (*pos)--; --self->column; self->token[--self->token_pos] = 0; self->tstate = T_START;
 #define SET_STATE(X) self->tstate = X; break;
-#define RETURN(X) self->tstate = T_INITIAL; return X;
+#define RETURN(X) self->tstate = T_START; return X;
 #define SET_NEWLINE self->line++; self->column = 1; RETURN(NEWLINE)
 #define CONTINUE continue;
 
-#define RESET self->column = 1; self->bytes = self->token_pos = 0; self->tstate = T_INITIAL;
+#define RESET self->column = 1; self->bytes = self->token_pos = 0; self->tstate = T_START;
 #define BREAK break;
 
 #define CHECK_BROKEN_TIMESTAMP \
@@ -128,7 +128,7 @@ if(self->token_pos == sizeof(self->token) - 1 ) \
  * lexer state
  */
 enum token_state_t {
-  T_INITIAL = 0, T_BOM0, T_BOM1, T_WEBVTT0, T_WEBVTT1, T_WEBVTT2, T_WEBVTT3, T_WEBVTT4, T_WEBVTT5, T_DASH0, T_SEP1,
+  T_START = 0, T_BOM0, T_BOM1, T_WEBVTT0, T_WEBVTT1, T_WEBVTT2, T_WEBVTT3, T_WEBVTT4, T_WEBVTT5, T_DASH0, T_SEP1,
   T_DIGIT0, T_NEWLINE0, T_WHITESPACE, T_POSITION0, T_POSITION1, T_POSITION2, T_POSITION3, T_POSITION4, T_POSITION5,
   T_POSITION6, T_ALIGN0, T_ALIGN1, T_ALIGN2, T_ALIGN3, T_L0, T_LINE1, T_LINE2, T_LINE3,
   T_VERTICAL0, T_VERTICAL1, T_VERTICAL2, T_VERTICAL3, T_VERTICAL4, T_VERTICAL5, T_VERTICAL6, T_RL0,
@@ -189,7 +189,7 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
     self->column++;
     self->bytes++;
     switch( self->tstate ) {
-        BEGIN_STATE(T_INITIAL)
+        BEGIN_STATE(T_START)
           U_DIGIT { SET_STATE(T_DIGIT0) }
           U_W  { SET_STATE(T_WEBVTT0) }
           U_DASH { SET_STATE(T_DASH0) }
@@ -512,22 +512,22 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
 }
 /**
  * token states
-T_INITIAL    + 'W' = T_WEBVTT0
-T_INITIAL    + '-' = T_DASH0
-T_INITIAL    + {D} = T_DIGIT0
-T_INITIAL    + CR  = T_NEWLINE0
-T_INITIAL    + LF  = *NEWLINE
-T_INITIAL    + SP  = T_WHITESPACE
-T_INITIAL    + TB  = T_WHITESPACE
-T_INITIAL    + FS = *FULL_STOP
-T_INITIAL    + 'p' = T_POSITION0
-T_INITIAL    + 'a' = T_ALIGN0
-T_INITIAL    + 'l' = T_L0
-T_INITIAL    + 'v' = T_VERTICAL0
-T_INITIAL    + 'r' = T_RL0
-T_INITIAL    + 's' = T_S0
-T_INITIAL    + 'm' = T_MIDDLE0
-T_INITIAL    + 'e' = T_END0
+T_START    + 'W' = T_WEBVTT0
+T_START    + '-' = T_DASH0
+T_START    + {D} = T_DIGIT0
+T_START    + CR  = T_NEWLINE0
+T_START    + LF  = *NEWLINE
+T_START    + SP  = T_WHITESPACE
+T_START    + TB  = T_WHITESPACE
+T_START    + FS = *FULL_STOP
+T_START    + 'p' = T_POSITION0
+T_START    + 'a' = T_ALIGN0
+T_START    + 'l' = T_L0
+T_START    + 'v' = T_VERTICAL0
+T_START    + 'r' = T_RL0
+T_START    + 's' = T_S0
+T_START    + 'm' = T_MIDDLE0
+T_START    + 'e' = T_END0
 T_WEBVTT0    + 'E' = T_WEBVTT1
 T_WEBVTT1    + 'B' = T_WEBVTT2
 T_WEBVTT2    + 'V' = T_WEBVTT3
