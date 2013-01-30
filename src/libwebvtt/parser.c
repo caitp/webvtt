@@ -1060,7 +1060,12 @@ _recheck:
             if( cue->flags & CUE_HAVE_CUEPARAMS ) {
               *mode = M_CUETEXT;
             } else if( cue->flags & CUE_HAVE_ID ) {
-              PUSH0( T_CUEREAD, 0, V_NONE );
+              webvtt_string *s = webvtt_alloc0( sizeof *s );
+              if( !s ) {
+                ERROR( WEBVTT_ALLOCATION_FAILED );
+              } 
+              webvtt_init_string( s );
+              PUSH0( T_CUEREAD, s, V_TEXT );
             } else {
               /* I don't think this should ever happen? */
               POPBACK();
