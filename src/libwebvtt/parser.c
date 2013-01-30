@@ -16,66 +16,6 @@
 #define  ASCII_DASH   (0x2D)
 #define  ASCII_GT     (0x3E)
 
-/**
- * parser modes
- */
-enum {
-  M_WEBVTT = 0,
-  M_CUETEXT,
-  M_SKIP_CUE,
-  M_READ_LINE,
-};
-
-
-/**
- * states
- */
-enum parse_state_t {
-  /**
-   * WEBVTT parse states
-   */
-  T_INITIAL = 0,
-  T_TAG,
-  T_TAGCOMMENT,
-  T_EOL,
-  T_BODY,
-
-  T_CUEREAD, /* Read a line of text for a cue */
-  T_CUE, /* T_CUEID T_CUEPARAMS T_CUETEXT NEWLINE */
-  T_CUEID, /* T_LINE !~ SEPARATOR && LINE !~ ^NOTE NEWLINE */
-  T_CUEPARAMS, /* TIMESTAMP WHITESPACE? SEPARATOR WHITESPACE? T_CUESETTING* NEWLINE */
-  T_CUETEXT, /* T_LINE !~ SEPARATOR NEWLINE NEWLINE */
-
-  T_TIMESTAMP, /* This looked like a timestamp to the lexer, may or may not be valid. */
-
-  /**
-   * NOTE comments
-   */
-  T_COMMENT,
-
-  /**
-   * Cuetimes
-   */
-  T_FROM,
-  T_SEP_LEFT,
-  T_SEP,
-  T_SEP_RIGHT,
-  T_UNTIL,
-
-  /**
-   * Cuesettings
-   */
-  T_PRECUESETTING,
-  T_CUESETTING,
-  T_CUESETTING_DELIMITER,
-  T_CUESETTING_VALUE,
-  T_SKIP_SETTING /* We have to skip a cue-setting because of an error. */
-
-  /**
-   * Cuetext parse states
-   */
-};
-
 #define ASCII_DASH (0x2D)
 #define ASCII_COLON  (0x3A)
 
@@ -869,11 +809,11 @@ _recheck:
         /**
          * If we have a WHITESPACE following the WEBVTT token,
          * switch to T_TAGCOMMENT state and skip the comment.
-         * Otherwise, if it's a NEWLINE, we can just skip to the T_BODY
-         * state.
+         * Otherwise, if it's a NEWLINE, we can just skip to
+         * the T_BODY state.
          *
-         * Otherwise, we didn't actually have a WEBVTT token, and should
-         * feel ashamed.
+         * Otherwise, we didn't actually have a WEBVTT token,
+         * and should feel ashamed.
          */
         if( token == WHITESPACE ) {
           /* switch to comment skipper */

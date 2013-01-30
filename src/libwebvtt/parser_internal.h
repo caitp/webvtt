@@ -36,8 +36,6 @@ webvtt_token_t {
   COLON, /* ':' */
 } webvtt_token;
 
-
-
 typedef enum 
 webvtt_state_value_type_t {
   V_NONE,
@@ -50,9 +48,66 @@ webvtt_state_value_type_t {
   V_TOKEN,
 } webvtt_state_value_type;
 
+enum
+webvtt_parse_mode {
+  M_WEBVTT = 0,
+  M_CUETEXT,
+  M_SKIP_CUE,
+  M_READ_LINE,
+};
+
+
+enum
+webvtt_parse_state {
+  /**
+   * WEBVTT parse states
+   */
+  T_INITIAL = 0,
+  T_TAG,
+  T_TAGCOMMENT,
+  T_EOL,
+  T_BODY,
+
+  T_CUEREAD, /* Read a line of text for a cue */
+  T_CUE, /* T_CUEID T_CUEPARAMS T_CUETEXT NEWLINE */
+  T_CUEID, /* T_LINE !~ SEPARATOR && LINE !~ ^NOTE NEWLINE */
+  T_CUEPARAMS, /* TIMESTAMP WHITESPACE? SEPARATOR WHITESPACE? T_CUESETTING* NEWLINE */
+  T_CUETEXT, /* T_LINE !~ SEPARATOR NEWLINE NEWLINE */
+
+  T_TIMESTAMP, /* This looked like a timestamp to the lexer, may or may not be valid. */
+
+  /**
+   * NOTE comments
+   */
+  T_COMMENT,
+
+  /**
+   * Cue times
+   */
+  T_FROM,
+  T_SEP_LEFT,
+  T_SEP,
+  T_SEP_RIGHT,
+  T_UNTIL,
+
+  /**
+   * Cue settings
+   */
+  T_PRECUESETTING,
+  T_CUESETTING,
+  T_CUESETTING_DELIMITER,
+  T_CUESETTING_VALUE,
+  T_SKIP_SETTING /* We have to skip a cue-setting because of an error. */
+
+  /**
+   * Cue text parse states
+   */
+};
+
+
 typedef struct
 webvtt_state {
-  webvtt_uint state;
+  enum webvtt_parse_state state;
   webvtt_token token;
   webvtt_state_value_type type;
   webvtt_uint back;
@@ -98,7 +153,7 @@ webvtt_parser_t {
   /**
    * 'mode' can have several states, it is not boolean.
    */
-  webvtt_uint mode;
+  enum webvtt_parse_mode mode;
 
   webvtt_state *top; /* Top parse state */
   webvtt_state astack[0x100];
