@@ -1,0 +1,28 @@
+#ifndef __WEBVTTXX_FILE_PARSER__
+# define __WEBVTTXX_FILE_PARSER__
+# include "abstract_parser"
+# include <string>
+# include <fstream>
+
+namespace WebVTT
+{
+
+class FileParser : public AbstractParser
+{
+public:
+  FileParser( const char *fPath );
+  virtual ~FileParser();
+
+  bool parse();
+  virtual bool reportError( const Error &error ) = 0;
+  virtual void parsedCue( Cue &cue ) = 0;
+
+
+protected:
+  std::string filePath;
+  std::ifstream reader;
+};
+
+}
+
+#endif

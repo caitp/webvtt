@@ -1,0 +1,7 @@
+/*
+According to the spec this should not be allowed, however the parser does accept this. Therefore it is a known test failure.
+*/
+WEBVTT
+
+00:11.000 --> 00:13.000
+Hey <ruby><rt>World Wide Web</rt></ruby>

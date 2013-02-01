@@ -1,0 +1,46 @@
+#ifndef __WEBVTTXX_ERROR__
+# define __WEBVTTXX_ERROR__
+# include "base"
+# include <webvtt/error.h>
+
+namespace WebVTT
+{
+
+class Error
+{
+public:
+  /**
+   * Copy constructor
+   */
+  Error( const Error &other )
+    : _line( other._line ),
+      _column( other._column ),
+      _error( other._error ),
+      _message( other._message ) {
+  }
+  Error &operator=( const Error &other ) {
+    *this = Error(other);
+    return *this;
+  }
+
+  Error( uint line, uint column, webvtt_error error )
+    : _line(line), _column(column), _error(error), _message( webvtt_strerror(error) ) {
+  }
+
+  ~Error() { }
+
+  inline uint line() const { return _line; }
+  inline uint column() const { return _column; }
+  inline ::webvtt_error error() const { return _error; }
+  inline const char *message() const { return _message; }
+
+private:
+  const uint _line;
+  const uint _column;
+  const ::webvtt_error _error;
+  const char *_message;
+};
+
+}
+
+#endif

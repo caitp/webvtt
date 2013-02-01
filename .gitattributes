@@ -1,0 +1,20 @@
+* text=auto
+
+Makefile text eol=lf
+*.md text eol=lf
+*.sln text eol=crlf
+*.vcxproj text eol=crlf
+*.vcxproj.filters text eol=crlf
+*.vcxproj.user text eol=crlf
+*.c text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.in text eol=lf
+*.am text eol=lf
+configure.ac text eol=lf
+configure text eol=lf
+*.m4 text eol=lf
+test/spec/*/*.test -text
+test/spec/*/*crlf.test -text eol=crlf
+*.vtt -text
+*.sh text eol=lf

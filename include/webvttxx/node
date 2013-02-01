@@ -1,0 +1,75 @@
+#ifndef __WEBVTTXX_NODE__
+# define __WEBVTTXX_NODE__
+
+# include <vector>
+# include <webvtt/cue.h>
+# include "string"
+# include "timestamp"
+
+namespace WebVTT
+{
+
+class InternalNode;
+class TimeStampNode;
+class TextNode;
+class Node
+{
+public:
+  enum NodeKind {
+    Class = WEBVTT_CLASS,
+    Italic = WEBVTT_ITALIC,
+    Underline = WEBVTT_UNDERLINE,
+    Bold = WEBVTT_BOLD,
+    Ruby = WEBVTT_RUBY,
+    RubyText = WEBVTT_RUBY_TEXT,
+    Voice = WEBVTT_VOICE,
+    Text = WEBVTT_TEXT,
+    TimeStamp = WEBVTT_TIME_STAMP
+  };
+
+  inline Node( webvtt_node *otherNode, Node *parent ) { node = otherNode; parentNode = parent; }
+  inline Node( webvtt_node *otherNode ) { node = otherNode; }
+  inline NodeKind kind() const { return (NodeKind)node->kind; }
+
+  const Node *parent() const;
+  const InternalNode *toInternalNode() const;
+  const TextNode *toTextNode() const;
+  const TimeStampNode *toTimeStampNode() const;
+
+protected:
+  Node *parentNode;
+  webvtt_node *node;
+};
+
+class InternalNode : public Node
+{
+public:
+  InternalNode( webvtt_node *otherNode );
+
+  inline String annotation() const { return String( &node->data.internal_data->annotation ); }
+  inline StringList cssClasses() const { return StringList( node->data.internal_data->css_classes ); }
+  inline uint childCount() const { return node->data.internal_data->length; }
+  const Node *child( uint index ) const;
+private:
+  std::vector<Node *> children;
+};
+
+class TextNode : public Node
+{
+public:
+  inline TextNode( webvtt_node *otherNode )
+    : Node( otherNode ) { }
+  inline String content() const { return String( &node->data.text ); }
+};
+
+class TimeStampNode : public Node
+{
+public:
+  inline TimeStampNode( webvtt_node *otherNode )
+    : Node( otherNode ) { }
+  inline Timestamp timeStamp() const { return Timestamp( node->data.timestamp ); }
+};
+
+}
+
+#endif

@@ -1,0 +1,128 @@
+#ifndef __WEBVTT_TEST_PARSER__
+#	define __WEBVTT_TEST_PARSER__
+#	include <webvttxx/file_parser>
+#	include <webvttxx/cue>
+#	include <gtest/gtest.h>
+#	include <stdexcept>
+using namespace WebVTT;
+
+namespace WebVTT
+{
+
+class ItemCounterParser : public FileParser
+{
+public:
+	ItemCounterParser( const char *fileName )
+	: FileParser( fileName ),
+	  cue_count(0),
+	  error_count(0)
+    {
+	}
+	
+	virtual ~ItemCounterParser() {}
+	virtual bool reportError( const Error &error )
+	{
+		++error_count;
+		return true;
+	}
+	
+	virtual void parsedCue( Cue &cue )
+	{
+		++cue_count;
+	}
+	
+	/**
+	 * return the number of cues read from the file
+	 */
+	inline uint cueCount() const
+	{
+		return cue_count;
+	}
+	
+	/**
+	 * return the number of errors encountered in the file
+	 */
+	inline uint errorCount() const
+	{
+		return error_count;
+	}
+	
+private:
+	uint cue_count;
+	uint error_count;
+};
+
+class ItemStorageParser : public ItemCounterParser
+{
+public:
+	ItemStorageParser( const char *fileName )
+	: ItemCounterParser( fileName )
+	{
+	}
+	
+	virtual ~ItemStorageParser()
+	{
+	}
+	
+	virtual bool reportError( const Error &error )
+	{
+		ItemCounterParser::reportError(error);
+		errors.push_back( error );
+		return true;
+	}
+	
+	virtual void parsedCue( Cue &cue )
+	{
+		ItemCounterParser::parsedCue( cue );
+		cues.push_back( cue );
+	}
+	
+	const Cue& getCue( uint i ) const
+	{
+		if( uint(i) >= cues.size() )
+		{
+			throw std::out_of_range( "ItemStorageParser::getCue: index out of bounds" );
+		}
+		return cues[i];
+	}
+	
+	const Error& getError( uint i ) const
+	{
+		if( uint(i) >= errors.size() )
+		{
+			throw std::out_of_range( "ItemStorageParser::getError: index out of bounds" );
+		}
+		return errors[i];
+	}
+	
+	typedef std::vector<Cue>::const_iterator CueIterator;
+	typedef std::vector<Error>::const_iterator ErrorIterator;
+	
+	CueIterator firstCue() const
+	{
+		return cues.begin();
+	}
+	
+	CueIterator lastCue() const
+	{
+		return cues.end();
+	}
+	
+	ErrorIterator firstError() const
+	{
+		return errors.begin();
+	}
+	
+	ErrorIterator lastError() const
+	{
+		return errors.end();
+	}
+	
+private:
+	std::vector<Cue> cues;
+	std::vector<Error> errors;
+};
+
+}
+
+#endif

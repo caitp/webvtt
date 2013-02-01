@@ -1,0 +1,105 @@
+################################################################################
+# .astylerc - rules for Artistic Style source code formatter, see:
+# http://astyle.sourceforge.net/astyle.html
+################################################################################
+
+
+# "One True Brace Style" formatting/indenting uses linux brackets and adds brackets
+# to unbracketed one line conditional statements. In the following example brackets
+# have been added to the "return 0;" statement.
+#
+# int Foo(bool isBar)
+# {
+#    if (isFoo) {
+#        bar();
+#        return 1;
+#    } else {
+#        return 0;
+#    }
+# }
+--style=1tbs
+
+
+# Indent using # spaces per indent
+--indent=spaces=2
+
+
+# Converts tabs into spaces in the non-indentation part of the line.
+--convert-tabs
+
+
+# Force use of the specified line end style.  linux = LF.
+--lineend=linux
+
+
+# Indent 'switch' blocks so that the 'case X:' statements are indented in the switch
+# block. The entire case block is indented.
+#
+# switch (foo)
+# {
+# case 1:
+#    a += 1;
+#    break;
+#
+# case 2:
+# {
+#    a += 2;
+#   break;
+# }
+# }
+#
+# becomes:
+#
+# switch (foo)
+# {
+#    case 1:
+#        a += 1;
+#        break;
+#
+#    case 2:
+#    {
+#        a += 2;
+#        break;
+#    }
+# }
+--indent-switches
+
+
+# Insert space padding around operators. Any end of line comments will remain in the
+# original column, if possible. Note that there is no option to unpad. Once padded,
+# they stay padded.
+#
+# if (foo==2)
+#    a=bar((b-c)*a,d--);
+#
+# becomes:
+#
+# if (foo == 2)
+#     a = bar((b - c) * a, d--);
+--pad-oper
+
+
+# Add one line brackets to unbracketed one line conditional statements (e.g. 'if', 'for',
+# 'while'...).
+#
+# if (isFoo)
+#    isFoo = false;
+#
+# becomes:
+#
+# if (isFoo)
+#    { isFoo = false; }
+--add-one-line-brackets
+
+
+# Attach a pointer or reference operator (* or &) to variable name (right).
+#
+# char* foo1;
+# char& foo2;
+#
+# becomes:
+#
+# char *foo1;
+# char &foo2;
+--align-pointer=name
+--align-reference=name

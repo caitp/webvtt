@@ -1,0 +1,116 @@
+#ifndef __WEBVTTXX_STRING__
+# define __WEBVTTXX_STRING__
+
+# include <webvtt/string.h>
+# include "base"
+
+# define UTF16_LEFT_TO_RIGHT   (0x200E)
+# define UTF16_RIGHT_TO_LEFT   (0x200F)
+# define UTF16_NO_BREAK_SPACE  (0x00A0)
+
+namespace WebVTT
+{
+
+class String
+{
+public:
+  inline String() {
+    webvtt_init_string( &string );
+  }
+
+  inline String( webvtt_string *other ) {
+    webvtt_copy_string( &string, other );
+  }
+
+  inline String( const byte *buffer, uint len ) {
+    if( WEBVTT_FAILED( webvtt_create_string_with_text( &string, buffer, len ) ) ) {
+      // TODO: Throw exception on errors.
+    }
+  }
+
+  /**
+   * Copy constructors
+   */
+  inline String( const String &other ) {
+    webvtt_copy_string( &string, &other.string );
+  }
+
+  inline String &operator=( const String &other ) {
+    webvtt_copy_string( &string, &other.string );
+    return *this;
+  }
+
+  inline ~String() {
+    webvtt_release_string( &string );
+  }
+
+  inline void detach() {
+    webvtt_string_detach( &string );
+  }
+
+  inline const byte *text() const {
+    return webvtt_string_text(&string);
+  }
+
+  inline uint length() const {
+    return webvtt_string_length(&string);
+  }
+
+  inline uint capacity() const {
+    return webvtt_string_capacity(&string);
+  }
+
+  inline String &append( byte ch ) {
+    webvtt_status status;
+    if( WEBVTT_FAILED(status = webvtt_string_putc( &string, ch ) ) ) {
+      // TODO: Throw exception on errors
+    }
+    return *this;
+  }
+
+  inline String &append( const String &other, int len = -1 ) {
+    webvtt_status status;
+    if( WEBVTT_FAILED(status = webvtt_string_append( &string, other.text(), len < 0 ? other.length() : (uint)len ) ) ) {
+      // TODO: Throw exception on errors
+    }
+    return *this;
+  }
+
+private:
+  webvtt_string string;
+};
+
+class StringList
+{
+public:
+
+  inline StringList() : stringList( 0 ) { }
+  inline StringList( webvtt_stringlist *other ) : stringList( other ) {}
+
+  inline String operator[]( uint i ) const
+  {
+    if( stringList && i <= stringList->length ) {
+      return String( &stringList->items[ i ] );
+	}
+    return String();
+  }
+
+  inline String stringAt( uint i ) {
+    return (*this)[ i ];
+  }
+
+  inline uint length() {
+    return stringList ? stringList->length : 0;
+  }
+
+  inline uint alloc() {
+    return stringList ? stringList->alloc : 0;
+  }
+
+private:
+  webvtt_stringlist *stringList;
+};
+
+}
+
+#endif

@@ -1,0 +1,17 @@
+#ifndef __WEBVTTXX_NODE_FACTORY__
+# define __WEBVTTXX_NODE_FACTORY__
+
+# include <webvtt/cue.h>
+# include "node"
+
+namespace WebVTT
+{
+
+class NodeFactory
+{
+public:
+  static Node* createNode( webvtt_node *otherNode );
+};
+
+}
+#endif

@@ -1,0 +1,15 @@
+#ifndef __PAYLOADNODE_TESTFIXTURE_H__
+#	define __PAYLOADNODE_TESTFIXTURE_H__
+
+#include "cue_testfixture"
+
+class PayloadTest : public CueTest
+{
+protected:
+	const InternalNode * getHeadOfCue( uint index ) 
+	{
+		return getCue( index ).nodeHead()->toInternalNode();
+	}
+};
+
+#endif

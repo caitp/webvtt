@@ -1,0 +1,27 @@
+#ifndef __WEBVTTXX_BASE__
+# define __WEBVTTXX_BASE__
+
+# include <webvtt/util.h>
+
+namespace WebVTT
+{
+
+typedef ::webvtt_uint8 uint8;
+typedef ::webvtt_uint16 uint16;
+typedef ::webvtt_uint32 uint32;
+typedef ::webvtt_uint64 uint64;
+typedef ::webvtt_int8 int8;
+typedef ::webvtt_int16 int16;
+typedef ::webvtt_int32 int32;
+typedef ::webvtt_int64 int64;
+typedef ::webvtt_uint uint;
+typedef ::webvtt_byte byte;
+typedef ::webvtt_uchar uchar;
+typedef ::webvtt_ushort ushort;
+typedef ::webvtt_ulong ulong;
+typedef ::webvtt_longlong longlong;
+typedef ::webvtt_ulonglong ulonglong;
+
+}
+
+#endif

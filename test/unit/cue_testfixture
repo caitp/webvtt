@@ -1,0 +1,120 @@
+#ifndef __CUE_TEXTFIXTURE_H__
+#   define __CUE_TEXTFIXTURE_H__
+
+#include "test_parser"
+
+class CueTest : public ::testing::Test
+{
+protected:
+  CueTest() : parser(0) {}
+  ~CueTest()
+  { 
+    if( parser )
+    {
+      try
+	  {
+	    delete parser; parser = 0;
+	  }
+      catch( std::exception e )
+	  {
+		  int x = 5;
+	  }
+    }
+  }
+  
+  /**
+   * Added functions for ASSERT-ing timestamp equality in an easier way.
+   */
+  void assertEquals( const Timestamp &ts, int hours, int minutes, int seconds, int millis )
+  {
+    ASSERT_EQ( hours, ts.hours() );
+    ASSERT_EQ( minutes, ts.minutes() );
+    ASSERT_EQ( seconds, ts.seconds() );
+
+    /* hack to avoid rounding error... */
+    ASSERT_TRUE( millis == ts.milliseconds() || millis == ts.milliseconds() + 1 );
+  }
+  
+  inline void assertEquals( const Timestamp &ts, int minutes, int seconds, int millis )
+  {
+    return assertEquals( ts, 0, minutes, seconds, millis );
+  }
+  
+  inline void assertEquals( const Error &err, webvtt_error code, WebVTT::uint line, WebVTT::uint column )
+  {
+    ASSERT_EQ( code, err.error() );
+    ASSERT_EQ( line, err.line() );
+    ASSERT_EQ( column, err.column() );
+  }
+  
+  void setVtt( const char *relativeFilePath )
+  {
+    std::string filePath;
+
+    // If TEST_FILE_DIR has not been set then that means we are probably
+    // not executing from a make command. Therefore, just use the path
+    // passed in.
+    filePath = std::string( getenv("TEST_FILE_DIR") ? getenv("TEST_FILE_DIR") : "." ) + 
+               std::string( "/" ) + relativeFilePath; 
+
+    parser = new ItemStorageParser( filePath.c_str() );
+  }
+
+  void loadVtt( const char *relativeFilePath )
+  {
+    setVtt( relativeFilePath );
+    ASSERT_TRUE( parser->parse() ) << "parser.parse() failed";
+  }
+
+  void loadVtt( const char *relativeFilePath, WebVTT::uint expectedNumberOfCues )
+  {
+    loadVtt( relativeFilePath );
+    ASSERT_EQ( expectedNumberOfCues, parser->cueCount() ) << "webvtt file contained different number of cues than expected, once parsed.";
+  }
+
+  void loadVtt( const char *relativeFilePath, bool expectedParseSuccessful, WebVTT::uint expectedNumberOfCues )
+  {
+    setVtt( relativeFilePath );
+    ASSERT_EQ( expectedParseSuccessful, parser->parse() ) << "parser.parse() failed";
+    ASSERT_EQ( expectedNumberOfCues, parser->cueCount() ) << "webvtt file contained different number of cues than expected, once parsed.";
+  }
+
+  WebVTT::uint cueCount() const
+  {
+    return parser->cueCount();
+  }
+  
+  WebVTT::uint errorCount() const
+  {
+    return parser->errorCount();
+  }
+  
+  const WebVTT::Cue& getCue( WebVTT::uint index )
+  {
+    try
+    {
+      return parser->getCue( index );
+    }
+    catch(std::exception e)
+    {
+      throw e;
+    }
+  }
+
+  const Error& getError( WebVTT::uint index )
+  {
+    try
+    {
+      return parser->getError( index );
+    }
+    catch( std::exception e )
+    {
+      throw e;
+    }
+  }
+
+private:
+  ItemStorageParser *parser;
+};
+
+#endif
