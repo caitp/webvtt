@@ -108,13 +108,13 @@
 #define END_STATE DEFAULT BACKUP return BADTOKEN; } } break;
 #define END_STATE_EX } } break;
 
-#define BACKUP (*pos)--; --self->column; self->token[--self->token_pos] = 0; self->tstate = T_START;
+#define BACKUP (*pos)--; --self->column; self->token[--self->token_pos] = 0; self->tstate = L_START;
 #define SET_STATE(X) self->tstate = X; break;
-#define RETURN(X) self->tstate = T_START; return X;
+#define RETURN(X) self->tstate = L_START; return X;
 #define SET_NEWLINE self->line++; self->column = 1; RETURN(NEWLINE)
 #define CONTINUE continue;
 
-#define RESET self->column = 1; self->bytes = self->token_pos = 0; self->tstate = T_START;
+#define RESET self->column = 1; self->bytes = self->token_pos = 0; self->tstate = L_START;
 #define BREAK break;
 
 #define CHECK_BROKEN_TIMESTAMP \
@@ -123,19 +123,6 @@ if(self->token_pos == sizeof(self->token) - 1 ) \
   ERROR(WEBVTT_MALFORMED_TIMESTAMP); \
   return BADTOKEN; \
 }
-
-/**
- * lexer state
- */
-enum token_state_t {
-  T_START = 0, T_BOM0, T_BOM1, T_WEBVTT0, T_WEBVTT1, T_WEBVTT2, T_WEBVTT3, T_WEBVTT4, T_WEBVTT5, T_DASH0, T_SEP1,
-  T_DIGIT0, T_NEWLINE0, T_WHITESPACE, T_POSITION0, T_POSITION1, T_POSITION2, T_POSITION3, T_POSITION4, T_POSITION5,
-  T_POSITION6, T_ALIGN0, T_ALIGN1, T_ALIGN2, T_ALIGN3, T_L0, T_LINE1, T_LINE2, T_LINE3,
-  T_VERTICAL0, T_VERTICAL1, T_VERTICAL2, T_VERTICAL3, T_VERTICAL4, T_VERTICAL5, T_VERTICAL6, T_RL0,
-  T_S0, T_SIZE1, T_SIZE2, T_START1, T_START2, T_START3, T_MIDDLE0, T_MIDDLE1, T_MIDDLE2, T_MIDDLE3,
-  T_MIDDLE4, T_END0, T_END1, T_TIMESTAMP1, T_TIMESTAMP2, T_TIMESTAMP3, T_RIGHT1, T_RIGHT2,
-  T_RIGHT3, T_NOTE1, T_NOTE2, T_NOTE3, T_LEFT1, T_LEFT2,
-};
 
 WEBVTT_INTERN webvtt_status
 webvtt_lex_word( webvtt_parser self, webvtt_string *str, const webvtt_byte *buffer, webvtt_uint *ppos, webvtt_uint length, int finish )
@@ -189,32 +176,32 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
     self->column++;
     self->bytes++;
     switch( self->tstate ) {
-        BEGIN_STATE(T_START)
-          U_DIGIT { SET_STATE(T_DIGIT0) }
-          U_W  { SET_STATE(T_WEBVTT0) }
-          U_DASH { SET_STATE(T_DASH0) }
-          U_BOM0 { SET_STATE(T_BOM0) }
+        BEGIN_STATE(L_START)
+          U_DIGIT { SET_STATE(L_DIGIT0) }
+          U_W  { SET_STATE(L_WEBVTT0) }
+          U_DASH { SET_STATE(L_DASH0) }
+          U_BOM0 { SET_STATE(L_BOM0) }
           U_LF { SET_NEWLINE }
-          U_CR { SET_STATE(T_NEWLINE0) }
-          U_SPACE OR U_TAB { SET_STATE(T_WHITESPACE) }
+          U_CR { SET_STATE(L_NEWLINE0) }
+          U_SPACE OR U_TAB { SET_STATE(L_WHITESPACE) }
           U_PERIOD { RETURN(FULL_STOP) }
           U_COLON { RETURN(COLON) }
-          U_p { SET_STATE(T_POSITION0) }
-          U_a { SET_STATE(T_ALIGN0) }
-          U_l { SET_STATE(T_L0) }
-          U_v { SET_STATE(T_VERTICAL0) }
-          U_r { SET_STATE(T_RL0) }
-          U_s { SET_STATE(T_S0) }
-          U_m { SET_STATE(T_MIDDLE0) }
-          U_e { SET_STATE(T_END0) }
-          U_N { SET_STATE(T_NOTE1) }
+          U_p { SET_STATE(L_POSITION0) }
+          U_a { SET_STATE(L_ALIGN0) }
+          U_l { SET_STATE(L_L0) }
+          U_v { SET_STATE(L_VERTICAL0) }
+          U_r { SET_STATE(L_RL0) }
+          U_s { SET_STATE(L_S0) }
+          U_m { SET_STATE(L_MIDDLE0) }
+          U_e { SET_STATE(L_END0) }
+          U_N { SET_STATE(L_NOTE1) }
         END_STATE
 
-        BEGIN_STATE(T_BOM0)
-          U_BOM1 { SET_STATE(T_BOM1) }
+        BEGIN_STATE(L_BOM0)
+          U_BOM1 { SET_STATE(L_BOM1) }
         END_STATE
 
-        BEGIN_STATE(T_BOM1)
+        BEGIN_STATE(L_BOM1)
           U_BOM2 {
           if( self->bytes == 3 ) {
             RESET
@@ -224,246 +211,246 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
         }
         END_STATE
 
-        BEGIN_STATE(T_WEBVTT0)
-          U_E { SET_STATE(T_WEBVTT1) }
+        BEGIN_STATE(L_WEBVTT0)
+          U_E { SET_STATE(L_WEBVTT1) }
         END_STATE
 
-        BEGIN_STATE(T_WEBVTT1)
-          U_B { SET_STATE(T_WEBVTT2) }
+        BEGIN_STATE(L_WEBVTT1)
+          U_B { SET_STATE(L_WEBVTT2) }
         END_STATE
 
-        BEGIN_STATE(T_WEBVTT2)
-          U_V { SET_STATE(T_WEBVTT3) }
+        BEGIN_STATE(L_WEBVTT2)
+          U_V { SET_STATE(L_WEBVTT3) }
         END_STATE
 
-        BEGIN_STATE(T_WEBVTT3)
-          U_T { SET_STATE(T_WEBVTT4) }
+        BEGIN_STATE(L_WEBVTT3)
+          U_T { SET_STATE(L_WEBVTT4) }
         END_STATE
 
-        BEGIN_STATE(T_WEBVTT4)
+        BEGIN_STATE(L_WEBVTT4)
           U_T { RETURN(WEBVTT) }
         END_STATE
 
-        BEGIN_STATE(T_DASH0)
-          U_DIGIT { SET_STATE(T_DIGIT0) }
-          U_DASH { SET_STATE(T_SEP1) }
+        BEGIN_STATE(L_DASH0)
+          U_DIGIT { SET_STATE(L_DIGIT0) }
+          U_DASH { SET_STATE(L_SEP1) }
         END_STATE
 
-        BEGIN_STATE(T_SEP1)
+        BEGIN_STATE(L_SEP1)
           U_GT { RETURN(SEPARATOR) }
         END_STATE
 
-        BEGIN_STATE(T_DIGIT0)
+        BEGIN_STATE(L_DIGIT0)
           U_DIGIT {
             OVERFLOW(INTEGER)
-            SET_STATE(T_DIGIT0)
+            SET_STATE(L_DIGIT0)
           }
-          U_COLON { SET_STATE(T_TIMESTAMP1) }
+          U_COLON { SET_STATE(L_TIMESTAMP1) }
           U_PERCENT { RETURN(PERCENTAGE) }
         DEFAULT { BACKUP AND RETURN(INTEGER) }
         END_STATE_EX
 
-        BEGIN_STATE(T_NEWLINE0)
+        BEGIN_STATE(L_NEWLINE0)
           U_LF { SET_NEWLINE }
         DEFAULT { BACKUP AND SET_NEWLINE }
         END_STATE_EX
 
-        BEGIN_STATE(T_WHITESPACE)
-          U_SPACE OR U_TAB { OVERFLOW(WHITESPACE) SET_STATE(T_WHITESPACE) }
+        BEGIN_STATE(L_WHITESPACE)
+          U_SPACE OR U_TAB { OVERFLOW(WHITESPACE) SET_STATE(L_WHITESPACE) }
         DEFAULT { BACKUP RETURN(WHITESPACE) }
         END_STATE_EX
 
-        BEGIN_STATE(T_POSITION0)
-          U_o { SET_STATE(T_POSITION1) }
+        BEGIN_STATE(L_POSITION0)
+          U_o { SET_STATE(L_POSITION1) }
         END_STATE
 
-        BEGIN_STATE(T_POSITION1)
-          U_s { SET_STATE(T_POSITION2) }
+        BEGIN_STATE(L_POSITION1)
+          U_s { SET_STATE(L_POSITION2) }
         END_STATE
 
-        BEGIN_STATE(T_POSITION2)
-          U_i { SET_STATE(T_POSITION3) }
+        BEGIN_STATE(L_POSITION2)
+          U_i { SET_STATE(L_POSITION3) }
         END_STATE
 
-        BEGIN_STATE(T_POSITION3)
-          U_t { SET_STATE(T_POSITION4) }
+        BEGIN_STATE(L_POSITION3)
+          U_t { SET_STATE(L_POSITION4) }
         END_STATE
 
-        BEGIN_STATE(T_POSITION4)
-          U_i { SET_STATE(T_POSITION5) }
+        BEGIN_STATE(L_POSITION4)
+          U_i { SET_STATE(L_POSITION5) }
         END_STATE
 
-        BEGIN_STATE(T_POSITION5)
-          U_o { SET_STATE(T_POSITION6) }
+        BEGIN_STATE(L_POSITION5)
+          U_o { SET_STATE(L_POSITION6) }
         END_STATE
 
-        BEGIN_STATE(T_POSITION6)
+        BEGIN_STATE(L_POSITION6)
           U_n { RETURN(POSITION) }
         END_STATE
 
-        BEGIN_STATE(T_ALIGN0)
-          U_l { SET_STATE(T_ALIGN1) }
+        BEGIN_STATE(L_ALIGN0)
+          U_l { SET_STATE(L_ALIGN1) }
         END_STATE
 
-        BEGIN_STATE(T_ALIGN1)
-          U_i { SET_STATE(T_ALIGN2) }
+        BEGIN_STATE(L_ALIGN1)
+          U_i { SET_STATE(L_ALIGN2) }
         END_STATE
 
-        BEGIN_STATE(T_ALIGN2)
-          U_g { SET_STATE(T_ALIGN3) }
+        BEGIN_STATE(L_ALIGN2)
+          U_g { SET_STATE(L_ALIGN3) }
         END_STATE
 
-        BEGIN_STATE(T_ALIGN3)
+        BEGIN_STATE(L_ALIGN3)
           U_n { RETURN(ALIGN) }
         END_STATE
 
-        BEGIN_STATE(T_L0)
+        BEGIN_STATE(L_L0)
           U_r { RETURN(LR) }
-          U_i { SET_STATE(T_LINE1) }
-          U_e { SET_STATE(T_LEFT1) }
+          U_i { SET_STATE(L_LINE1) }
+          U_e { SET_STATE(L_LEFT1) }
         END_STATE
 
-        BEGIN_STATE(T_LINE1)
-          U_n { SET_STATE(T_LINE2) }
+        BEGIN_STATE(L_LINE1)
+          U_n { SET_STATE(L_LINE2) }
         END_STATE
 
-        BEGIN_STATE(T_LINE2)
+        BEGIN_STATE(L_LINE2)
           U_e { RETURN(LINE) }
         END_STATE
 
-        BEGIN_STATE(T_LEFT1)
-          U_f { SET_STATE(T_LEFT2) }
+        BEGIN_STATE(L_LEFT1)
+          U_f { SET_STATE(L_LEFT2) }
         END_STATE
 
-        BEGIN_STATE(T_LEFT2)
+        BEGIN_STATE(L_LEFT2)
           U_t { RETURN(LEFT) }
         END_STATE
 
-        BEGIN_STATE(T_VERTICAL0)
-          U_e { SET_STATE(T_VERTICAL1) }
+        BEGIN_STATE(L_VERTICAL0)
+          U_e { SET_STATE(L_VERTICAL1) }
         END_STATE
 
-        BEGIN_STATE(T_VERTICAL1)
-          U_r { SET_STATE(T_VERTICAL2) }
+        BEGIN_STATE(L_VERTICAL1)
+          U_r { SET_STATE(L_VERTICAL2) }
         END_STATE
 
-        BEGIN_STATE(T_VERTICAL2)
-          U_t { SET_STATE(T_VERTICAL3) }
+        BEGIN_STATE(L_VERTICAL2)
+          U_t { SET_STATE(L_VERTICAL3) }
         END_STATE
 
-        BEGIN_STATE(T_VERTICAL3)
-          U_i { SET_STATE(T_VERTICAL4) }
+        BEGIN_STATE(L_VERTICAL3)
+          U_i { SET_STATE(L_VERTICAL4) }
         END_STATE
 
-        BEGIN_STATE(T_VERTICAL4)
-          U_c { SET_STATE(T_VERTICAL5) }
+        BEGIN_STATE(L_VERTICAL4)
+          U_c { SET_STATE(L_VERTICAL5) }
         END_STATE
 
-        BEGIN_STATE(T_VERTICAL5)
-          U_a { SET_STATE(T_VERTICAL6) }
+        BEGIN_STATE(L_VERTICAL5)
+          U_a { SET_STATE(L_VERTICAL6) }
         END_STATE
 
-        BEGIN_STATE(T_VERTICAL6)
+        BEGIN_STATE(L_VERTICAL6)
           U_l { RETURN(VERTICAL) }
         END_STATE
 
-        BEGIN_STATE(T_RL0)
+        BEGIN_STATE(L_RL0)
           U_l { RETURN(RL) }
-          U_i { SET_STATE(T_RIGHT1) }
+          U_i { SET_STATE(L_RIGHT1) }
         END_STATE
 
-        BEGIN_STATE(T_RIGHT1)
-          U_g { SET_STATE(T_RIGHT2) }
+        BEGIN_STATE(L_RIGHT1)
+          U_g { SET_STATE(L_RIGHT2) }
         END_STATE
 
-        BEGIN_STATE(T_RIGHT2)
-          U_h { SET_STATE(T_RIGHT3) }
+        BEGIN_STATE(L_RIGHT2)
+          U_h { SET_STATE(L_RIGHT3) }
         END_STATE
 
-        BEGIN_STATE(T_RIGHT3)
+        BEGIN_STATE(L_RIGHT3)
           U_t { RETURN(RIGHT) }
         END_STATE
 
-        BEGIN_STATE(T_S0)
-          U_t { SET_STATE(T_START1) }
-          U_i { SET_STATE(T_SIZE1) }
+        BEGIN_STATE(L_S0)
+          U_t { SET_STATE(L_START1) }
+          U_i { SET_STATE(L_SIZE1) }
         END_STATE
 
-        BEGIN_STATE(T_SIZE1)
-          U_z { SET_STATE(T_SIZE2) }
+        BEGIN_STATE(L_SIZE1)
+          U_z { SET_STATE(L_SIZE2) }
         END_STATE
 
-        BEGIN_STATE(T_SIZE2)
+        BEGIN_STATE(L_SIZE2)
           U_e { RETURN(SIZE) }
         END_STATE
 
-        BEGIN_STATE(T_START1)
-          U_a { SET_STATE(T_START2) }
+        BEGIN_STATE(L_START1)
+          U_a { SET_STATE(L_START2) }
         END_STATE
 
-        BEGIN_STATE(T_START2)
-          U_r { SET_STATE(T_START3) }
+        BEGIN_STATE(L_START2)
+          U_r { SET_STATE(L_START3) }
         END_STATE
 
-        BEGIN_STATE(T_START3)
+        BEGIN_STATE(L_START3)
           U_t { RETURN(START) }
         END_STATE
 
-        BEGIN_STATE(T_MIDDLE0)
-          U_i { SET_STATE(T_MIDDLE1) }
+        BEGIN_STATE(L_MIDDLE0)
+          U_i { SET_STATE(L_MIDDLE1) }
         END_STATE
 
-        BEGIN_STATE(T_MIDDLE1)
-          U_d { SET_STATE(T_MIDDLE2) }
+        BEGIN_STATE(L_MIDDLE1)
+          U_d { SET_STATE(L_MIDDLE2) }
         END_STATE
 
-        BEGIN_STATE(T_MIDDLE2)
-          U_d { SET_STATE(T_MIDDLE3) }
+        BEGIN_STATE(L_MIDDLE2)
+          U_d { SET_STATE(L_MIDDLE3) }
         END_STATE
 
-        BEGIN_STATE(T_MIDDLE3)
-          U_l { SET_STATE(T_MIDDLE4) }
+        BEGIN_STATE(L_MIDDLE3)
+          U_l { SET_STATE(L_MIDDLE4) }
         END_STATE
 
-        BEGIN_STATE(T_MIDDLE4)
+        BEGIN_STATE(L_MIDDLE4)
           U_e { RETURN(MIDDLE) }
         END_STATE
 
-        BEGIN_STATE(T_END0)
-          U_n { SET_STATE(T_END1) }
+        BEGIN_STATE(L_END0)
+          U_n { SET_STATE(L_END1) }
         END_STATE
 
-        BEGIN_STATE(T_END1)
+        BEGIN_STATE(L_END1)
           U_d { RETURN(END) }
         END_STATE
 
-        BEGIN_STATE(T_TIMESTAMP1)
+        BEGIN_STATE(L_TIMESTAMP1)
           U_DIGIT {
           OVERFLOW(BADTOKEN)
-          SET_STATE(T_TIMESTAMP1)
+          SET_STATE(L_TIMESTAMP1)
         }
           U_COLON {
           OVERFLOW(BADTOKEN)
-          SET_STATE(T_TIMESTAMP2)
+          SET_STATE(L_TIMESTAMP2)
         }
           U_PERIOD {
           OVERFLOW(BADTOKEN)
-          SET_STATE(T_TIMESTAMP3)
+          SET_STATE(L_TIMESTAMP3)
         }
         END_STATE
 
-        BEGIN_STATE(T_TIMESTAMP2)
+        BEGIN_STATE(L_TIMESTAMP2)
           U_DIGIT {
           OVERFLOW(BADTOKEN)
-          SET_STATE(T_TIMESTAMP2)
+          SET_STATE(L_TIMESTAMP2)
         }
           U_PERIOD {
           OVERFLOW(BADTOKEN)
-          SET_STATE(T_TIMESTAMP3)
+          SET_STATE(L_TIMESTAMP3)
         }
         END_STATE
 
-        BEGIN_STATE(T_TIMESTAMP3)
+        BEGIN_STATE(L_TIMESTAMP3)
           U_DIGIT {
           OVERFLOW(TIMESTAMP)
           BREAK
@@ -475,15 +462,15 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
         }
         END_STATE_EX
 
-        BEGIN_STATE(T_NOTE1)
-          U_O { SET_STATE(T_NOTE2) }
+        BEGIN_STATE(L_NOTE1)
+          U_O { SET_STATE(L_NOTE2) }
         END_STATE
 
-        BEGIN_STATE(T_NOTE2)
-          U_T { SET_STATE(T_NOTE3) }
+        BEGIN_STATE(L_NOTE2)
+          U_T { SET_STATE(L_NOTE3) }
         END_STATE
 
-        BEGIN_STATE(T_NOTE3)
+        BEGIN_STATE(L_NOTE3)
           U_E { RETURN(NOTE) }
         END_STATE
     }
@@ -495,11 +482,11 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
    */
   if( finish ) {
     switch( self->tstate ) {
-      case T_DIGIT0:
+      case L_DIGIT0:
         RETURN(INTEGER)
-      case T_TIMESTAMP3:
+      case L_TIMESTAMP3:
         RETURN(TIMESTAMP)
-      case T_WHITESPACE:
+      case L_WHITESPACE:
         RETURN(WHITESPACE)
       default:
         if(self->token_pos) {
@@ -512,74 +499,74 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
 }
 /**
  * token states
-T_START    + 'W' = T_WEBVTT0
-T_START    + '-' = T_DASH0
-T_START    + {D} = T_DIGIT0
-T_START    + CR  = T_NEWLINE0
-T_START    + LF  = *NEWLINE
-T_START    + SP  = T_WHITESPACE
-T_START    + TB  = T_WHITESPACE
-T_START    + FS = *FULL_STOP
-T_START    + 'p' = T_POSITION0
-T_START    + 'a' = T_ALIGN0
-T_START    + 'l' = T_L0
-T_START    + 'v' = T_VERTICAL0
-T_START    + 'r' = T_RL0
-T_START    + 's' = T_S0
-T_START    + 'm' = T_MIDDLE0
-T_START    + 'e' = T_END0
-T_WEBVTT0    + 'E' = T_WEBVTT1
-T_WEBVTT1    + 'B' = T_WEBVTT2
-T_WEBVTT2    + 'V' = T_WEBVTT3
-T_WEBVTT3    + 'T' = T_WEBVTT4
-T_WEBVTT4    + 'T' = *WEBVTT
-T_DASH0      + {D} = T_DIGIT0
-T_DASH0      + '-' = T_SEP1
-T_SEP1       + '>' = *SEPARATOR
-T_DIGIT0     + {D} = T_DIGIT0
-T_NEWLINE0   + LF  = *NEWLINE
-T_WHITESPACE + TB  = T_WHITESPACE
-T_WHITESPACE + SP  = T_WHITESPACE
-T_POSITION0  + 'o' = T_POSITION1
-T_POSITION1  + 's' = T_POSITION2
-T_POSITION2  + 'i' = T_POSITION3
-T_POSITION3  + 't' = T_POSITION4
-T_POSITION4  + 'i' = T_POSITION5
-T_POSITION5  + 'o' = T_POSITION6
-T_POSITION6  + 'n' = T_POSITION7
-T_POSITION7  + ':' = *POSITION
-T_ALIGN0     + 'l' = T_ALIGN1
-T_ALIGN1     + 'i' = T_ALIGN2
-T_ALIGN2     + 'g' = T_ALIGN3
-T_ALIGN3     + 'n' = T_ALIGN4
-T_ALIGN4     + ':' = *ALIGN
+L_START    + 'W' = L_WEBVTT0
+L_START    + '-' = L_DASH0
+L_START    + {D} = L_DIGIT0
+L_START    + CR  = L_NEWLINE0
+L_START    + LF  = *NEWLINE
+L_START    + SP  = L_WHITESPACE
+L_START    + TB  = L_WHITESPACE
+L_START    + FS = *FULL_STOP
+L_START    + 'p' = L_POSITION0
+L_START    + 'a' = L_ALIGN0
+L_START    + 'l' = L_L0
+L_START    + 'v' = L_VERTICAL0
+L_START    + 'r' = L_RL0
+L_START    + 's' = L_S0
+L_START    + 'm' = L_MIDDLE0
+L_START    + 'e' = L_END0
+L_WEBVTT0    + 'E' = L_WEBVTT1
+L_WEBVTT1    + 'B' = L_WEBVTT2
+L_WEBVTT2    + 'V' = L_WEBVTT3
+L_WEBVTT3    + 'T' = L_WEBVTT4
+L_WEBVTT4    + 'T' = *WEBVTT
+L_DASH0      + {D} = L_DIGIT0
+L_DASH0      + '-' = L_SEP1
+L_SEP1       + '>' = *SEPARATOR
+L_DIGIT0     + {D} = L_DIGIT0
+L_NEWLINE0   + LF  = *NEWLINE
+L_WHITESPACE + TB  = L_WHITESPACE
+L_WHITESPACE + SP  = L_WHITESPACE
+L_POSITION0  + 'o' = L_POSITION1
+L_POSITION1  + 's' = L_POSITION2
+L_POSITION2  + 'i' = L_POSITION3
+L_POSITION3  + 't' = L_POSITION4
+L_POSITION4  + 'i' = L_POSITION5
+L_POSITION5  + 'o' = L_POSITION6
+L_POSITION6  + 'n' = L_POSITION7
+L_POSITION7  + ':' = *POSITION
+L_ALIGN0     + 'l' = L_ALIGN1
+L_ALIGN1     + 'i' = L_ALIGN2
+L_ALIGN2     + 'g' = L_ALIGN3
+L_ALIGN3     + 'n' = L_ALIGN4
+L_ALIGN4     + ':' = *ALIGN
 L0         + 'r' = *LR
-L0         + 'i' = T_LINE1
-T_LINE1      + 'n' = T_LINE2
-T_LINE2      + 'e' = T_LINE3
-T_LINE3      + ':' = *LINE
-T_VERTICAL0  + 'e' = T_VERTICAL1
-T_VERTICAL1  + 'r' = T_VERTICAL2
-T_VERTICAL2  + 't' = T_VERTICAL3
-T_VERTICAL3  + 'i' = T_VERTICAL4
-T_VERTICAL4  + 'c' = T_VERTICAL5
-T_VERTICAL5  + 'a' = T_VERTICAL6
-T_VERTICAL6  + 'l' = T_VERTICAL7
-T_VERTICAL7  + ':' = *VERTICAL
-T_RL0        + 'l' = *RL
-T_S0         + 't' = T_START1
-T_S0         + 'i' = T_SIZE1
-T_SIZE1      + 'z' = T_SIZE2
-T_SIZE2      + 'e' = T_SIZE3
-T_SIZE3      + ':' = *SIZE
-T_START1     + 'a' = T_START2
-T_START2     + 'r' = T_START3
-T_START3     + 't' = *START
-T_MIDDLE0    + 'i' = T_MIDDLE1
-T_MIDDLE1    + 'd' = T_MIDDLE2
-T_MIDDLE2    + 'd' = T_MIDDLE3
-T_MIDDLE3    + 'l' = T_MIDDLE4
-T_MIDDLE4    + 'e' = *MIDDLE
-T_END0       + 'n' = T_END1
-T_END1       + 'd' = *END
+L0         + 'i' = L_LINE1
+L_LINE1      + 'n' = L_LINE2
+L_LINE2      + 'e' = L_LINE3
+L_LINE3      + ':' = *LINE
+L_VERTICAL0  + 'e' = L_VERTICAL1
+L_VERTICAL1  + 'r' = L_VERTICAL2
+L_VERTICAL2  + 't' = L_VERTICAL3
+L_VERTICAL3  + 'i' = L_VERTICAL4
+L_VERTICAL4  + 'c' = L_VERTICAL5
+L_VERTICAL5  + 'a' = L_VERTICAL6
+L_VERTICAL6  + 'l' = L_VERTICAL7
+L_VERTICAL7  + ':' = *VERTICAL
+L_RL0        + 'l' = *RL
+L_S0         + 't' = L_START1
+L_S0         + 'i' = L_SIZE1
+L_SIZE1      + 'z' = L_SIZE2
+L_SIZE2      + 'e' = L_SIZE3
+L_SIZE3      + ':' = *SIZE
+L_START1     + 'a' = L_START2
+L_START2     + 'r' = L_START3
+L_START3     + 't' = *START
+L_MIDDLE0    + 'i' = L_MIDDLE1
+L_MIDDLE1    + 'd' = L_MIDDLE2
+L_MIDDLE2    + 'd' = L_MIDDLE3
+L_MIDDLE3    + 'l' = L_MIDDLE4
+L_MIDDLE4    + 'e' = *MIDDLE
+L_END0       + 'n' = L_END1
+L_END1       + 'd' = *END
  */

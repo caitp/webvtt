@@ -714,7 +714,7 @@ break
 
 static WEBVTT_INTERN webvtt_status
 parse_webvtt( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *ppos,
-              webvtt_uint len, webvtt_uint *mode, int finish )
+              webvtt_uint len, webvtt_parse_mode *mode, int finish )
 {
   webvtt_status status = WEBVTT_SUCCESS;
   webvtt_token token;
@@ -1021,7 +1021,8 @@ _finish:
 }
 
 static WEBVTT_INTERN webvtt_status
-read_cuetext( webvtt_parser self, const webvtt_byte *b, webvtt_uint *ppos, webvtt_uint len, webvtt_uint *mode, webvtt_bool finish )
+read_cuetext( webvtt_parser self, const webvtt_byte *b, webvtt_uint
+*ppos, webvtt_uint len, webvtt_parse_mode *mode, webvtt_bool finish )
 {
   webvtt_status status = WEBVTT_SUCCESS;
   webvtt_uint pos = *ppos;
