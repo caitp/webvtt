@@ -20,9 +20,9 @@ AbstractParser::~AbstractParser()
 }
 
 ::webvtt_status
-AbstractParser::parseChunk( const void *chunk, webvtt_uint length, bool finished )
+AbstractParser::parseChunk( const void *chunk, webvtt_uint length )
 {
-  return webvtt_parse_chunk( parser, chunk, length, (int)finished );
+  return webvtt_parse_chunk( parser, chunk, length );
 }
 
 void WEBVTT_CALLBACK

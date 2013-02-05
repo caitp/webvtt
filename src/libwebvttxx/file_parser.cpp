@@ -35,7 +35,7 @@ FileParser::parse()
     reader.read( buffer, sizeof buffer );
     uint len = (uint)reader.gcount();
     final = reader.eof();
-    status = parseChunk( buffer, len, final );
+    status = parseChunk( buffer, len );
   } while( !final && !WEBVTT_FAILED(status) );
 
   return status == WEBVTT_SUCCESS;
