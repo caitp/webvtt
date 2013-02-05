@@ -114,14 +114,62 @@ webvtt_lexer_state_t {
   L_RIGHT3, L_NOTE1, L_NOTE2, L_NOTE3, L_LEFT1, L_LEFT2,
 } webvtt_lexer_state;
 
-typedef struct
+typedef struct webvtt_state webvtt_state;
+
+typedef webvtt_status (*webvtt_parse_callback)( webvtt_parser self,
+  webvtt_state *state, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+
+WEBVTT_INTERN webvtt_status webvtt_read_cuetext_line( webvtt_parser self,
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_read_cuetext( webvtt_parser self,
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_cue( webvtt_parser self,
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_read_settings( webvtt_parser self,
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_settings( webvtt_parser self,
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_params( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_size( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+WEBVTT_INTERN webvtt_status webvtt_parse_align( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+WEBVTT_INTERN webvtt_status webvtt_parse_position( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+WEBVTT_INTERN webvtt_status webvtt_parse_vertical( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+WEBVTT_INTERN webvtt_status webvtt_parse_line( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_header( webvtt_parser self,
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_body( webvtt_parser self,
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+enum
+webvtt_header_flags {
+  WEBVTT_HEADER_START = 0,
+  WEBVTT_HEADER_TAG,
+  WEBVTT_HEADER_COMMENT,
+  WEBVTT_HEADER_EOL,
+};
+
+struct
 webvtt_state {
-  webvtt_parse_state state;
+  webvtt_parse_callback callback;
   webvtt_token token;
   webvtt_state_value_type type;
-  webvtt_uint back;
   webvtt_uint line;
   webvtt_uint column;
+  webvtt_uint flags;
   union {
     /**
      * cue value
@@ -147,11 +195,17 @@ webvtt_state {
      */
     webvtt_uint value;
   } v;
-} webvtt_state;
+};
+
+typedef enum
+webvtt_parser_flags_t {
+  HAVE_MALFORMED_TAG = 0x80000000,
+} webvtt_parser_flags;
 
 struct
 webvtt_parser_t {
-  webvtt_uint state;
+  webvtt_uint flags;
+  webvtt_bool finish;
   webvtt_uint bytes; /* number of bytes read. */
   webvtt_uint line;
   webvtt_uint column;
@@ -192,18 +246,15 @@ WEBVTT_INTERN int parse_timestamp( const webvtt_byte *b, webvtt_timestamp *resul
 
 #define BAD_TIMESTAMP(ts) ( ( ts ) == 0xFFFFFFFFFFFFFFFF )
 
-#define ERROR(Code) \
+#define ERROR_AT(Code,Line, Column) \
 do \
 { \
-  if( !self->error || self->error(self->userdata,self->line,self->column,Code) < 0 ) \
+  if( !self->error || self->error(self->userdata,(Line),(Column),Code) < 0 ) \
     return WEBVTT_PARSE_ERROR; \
 } while(0)
 
-#define ERROR_AT_COLUMN(Code,Column) \
-do \
-{ \
-  if( !self->error || self->error(self->userdata,self->line,(Column),Code) < 0 ) \
-    return WEBVTT_PARSE_ERROR; \
-} while(0)
+#define ERROR(Code) ERROR_AT( ( Code ), self->line, self->column )
+
+#define ERROR_AT_COLUMN(Code,Column) ERROR_AT( ( Code ), self->line, ( Column ) )
 
 #endif
