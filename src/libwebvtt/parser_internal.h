@@ -118,9 +118,24 @@ webvtt_lexer_state_t {
   L_RIGHT3, L_NOTE1, L_NOTE2, L_NOTE3, L_LEFT1, L_LEFT2,
 } webvtt_lexer_state;
 
-typedef struct
+typedef struct webvtt_state webvtt_state;
+typedef webvtt_status (*webvtt_parse_callback)( webvtt_parser self,
+  webvtt_state *state, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+
+WEBVTT_INTERN webvtt_status webvtt_read_id( webvtt_parser self,
+  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+WEBVTT_INTERN webvtt_status webvtt_read_settings( webvtt_parser self,
+  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+WEBVTT_INTERN webvtt_status webvtt_read_cuetext( webvtt_parser self,
+  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+WEBVTT_INTERN webvtt_status webvtt_parse_settings( webvtt_parser self,
+  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+WEBVTT_INTERN webvtt_status webvtt_parse_header( webvtt_parser self,
+  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+
+struct
 webvtt_state {
-  webvtt_parse_state state;
+  webvtt_parse_callback callback;
   webvtt_token token;
   webvtt_state_value_type type;
   webvtt_uint back;
@@ -135,7 +150,7 @@ webvtt_state {
     /**
      * string value
      */
-    webvtt_string *text;
+    webvtt_string text;
 
     /**
      * The cuetext parser is not currently using the state stack, and
@@ -151,7 +166,7 @@ webvtt_state {
      */
     webvtt_uint value;
   } v;
-} webvtt_state;
+};
 
 struct
 webvtt_parser_t {
