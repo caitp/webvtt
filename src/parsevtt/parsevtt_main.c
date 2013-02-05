@@ -29,7 +29,7 @@ parse_fh(FILE *fh, webvtt_parser vtt)
     char buffer[0x1000];
     webvtt_uint n_read = (webvtt_uint)fread( buffer, 1, sizeof(buffer), fh );
     finished = feof( fh );
-    if( WEBVTT_FAILED(result = webvtt_parse_chunk( vtt, buffer, n_read, finished )) ) {
+    if( WEBVTT_FAILED(result = webvtt_parse_chunk( vtt, buffer, n_read )) ) {
       return 1;
     }
   } while( !finished && result == WEBVTT_SUCCESS );

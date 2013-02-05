@@ -30,25 +30,25 @@ static webvtt_int64 parse_int( const webvtt_byte **pb, int *pdigits );
 static int parse_timestamp( webvtt_parser self, const webvtt_byte *b, webvtt_timestamp *result );
 
 WEBVTT_INTERN webvtt_status
-webvtt_read_id( webvtt_parser self, webvtt_state *st, webvtt_byte *text,
+webvtt_read_id( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint length )
 {
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_read_settings( webvtt_parser self, webvtt_state *st, webvtt_byte *text,
+webvtt_read_settings( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint length )
 {
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_read_cuetext( webvtt_parser self, webvtt_state *st, webvtt_byte *text,
+webvtt_read_cuetext( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint length )
 {
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_parse_settings( webvtt_parser self, webvtt_state *st, webvtt_byte *text,
+webvtt_parse_settings( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint length )
 {
 }
@@ -57,31 +57,155 @@ webvtt_parse_settings( webvtt_parser self, webvtt_state *st, webvtt_byte *text,
  * Read a WEBVTT header
  */
 WEBVTT_INTERN webvtt_status
-webvtt_parse_header( webvtt_parser self, webvtt_state *st, webvtt_byte *text,
-  webvtt_uint *pos, webvtt_uint length )
+webvtt_parse_header( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
 {
+  int v;
   webvtt_token token;
   while( *pos < len )
   {
     CALLBACK_DATA
-    token = webvtt_lex( self, text, pos, len, 0 );
-    switch( token ) {
-    case UNFINISHED:
-      return WEBVTT_SUCCESS;
+    switch( st->flags )
+    {
+    case 0:
+      token = webvtt_lex( self, text, pos, len, 0 );
+      switch( token ) {
+        case UNFINISHED:
+          return WEBVTT_SUCCESS;
+    
+        case WEBVTT:
+          st->flags = WEBVTT_HEADER_TAG;
+          break;
 
-    case WEBVTT:
-      st->callback = webvtt_parse_body;
-      PUSH( &webvtt_parse_tagcomment, 1, 0, V_NONE );
-      return SP->callback( self, SP, text, pos, len );
+        default:
+          ERROR(WEBVTT_MALFORMED_TAG);
+          return WEBVTT_PARSE_ERROR;
+      }
+      break;
+    case WEBVTT_HEADER_TAG:
+      token = webvtt_lex( self, text, pos, len, 0 );
+      switch( token ) {
+        case WHITESPACE:
+          st->flags = WEBVTT_HEADER_COMMENT;
+          break;
 
-    default:
-      ERROR(WEBVTT_MALFORMED_TAG);
-      return WEBVTT_PARSE_ERROR;           
+        case NEWLINE:
+          st->flags = 0;
+          st->callback = &webvtt_parse_body;
+          return WEBVTT_SUCCESS;
+
+        default:
+          ERROR(WEBVTT_MALFORMED_TAG);
+          return WEBVTT_PARSE_ERROR;
+      }
+      break;
+
+    case WEBVTT_HEADER_COMMENT:
+      st->type = V_TEXT;
+      webvtt_init_string( &st->v.text );
+      v = webvtt_string_getline( &st->v.text, text, pos, len, 0, 0, 0 );
+      if( v < 0 ) {
+        webvtt_release_string( &st->v.text );
+        ERROR( WEBVTT_ALLOCATION_FAILED );
+        return WEBVTT_OUT_OF_MEMORY;
+      }
+      if( v > 0 ) {
+        if( webvtt_lex( self, text, pos, len, 0 ) == NEWLINE ) {
+          webvtt_release_string( &st->v.text );
+          st->flags = WEBVTT_HEADER_EOL;
+        }
+      }
+      break;
+
+    case WEBVTT_HEADER_EOL:
+      token = webvtt_lex( self, text, pos, len, 0 );
+      switch( token ) {
+        case NEWLINE:
+          st->flags = 0;
+          st->callback = &webvtt_parse_body;
+          return WEBVTT_SUCCESS;
+
+        default:
+          *pos -= self->token_pos;
+        case BADTOKEN:
+          /* error, expected eol */
+          ERROR(WEBVTT_EXPECTED_EOL);
+          st->callback = &webvtt_parse_body;
+          return WEBVTT_SUCCESS;
+      }
     }
   }
 }
 
+/**
+ * Parse Cue ID
+ */
+WEBVTT_INTERN webvtt_status
+webvtt_parse_id( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+  int v;
+  if( st->type == V_NONE ) {
+    webvtt_init_string( &st->v.text );
+  }
+  
+  v = webvtt_string_getline( &st->v.text, text, pos, len, 0, 0, 0 );
+  
+  if( v < 0 ) {
+    ERROR( WEBVTT_ALLOCATION_FAILED );
+    return WEBVTT_OUT_OF_MEMORY;
+  }
 
+  if( v > 0 ) {
+    static const webvtt_byte separator[] = {
+      ASCII_DASH, ASCII_DASH, ASCII_GT
+    };
+    if( find_bytes( webvtt_string_text( &st->v.text ), webvtt_string_length( &st->v.text ),
+          separator, sizeof( separator ) ) ) {
+      st->callback = webvtt_parse_settings;
+      return WEBVTT_SUCCESS;
+    }
+  } else {
+    /**
+     * TODO: Create new Cue object if none exists, and
+     * give ownership of the cue id string to it.
+     * FRAME(1)->
+     */
+  }
+}
+
+/**
+ * Parse a Cue
+ */
+WEBVTT_INTERN webvtt_status
+webvtt_parse_cue( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+}
+
+/**
+ * Parse body of webvtt file
+ */
+WEBVTT_INTERN webvtt_status
+webvtt_parse_body( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+  while( *pos < len ) {
+    CALLBACK_DATA
+    webvtt_token token = webvtt_lex( self, text, pos, len. 0 );
+    switch( token ) {
+    case NEWLINE:
+      break;
+
+    default:
+       self->column -= self->token_pos;
+       self->bytes -= self->token_pos;
+       PUSH( &webvtt_parse_cue, 0, V_NONE );
+       PUSH( &webvtt_parse_id, 0, V_NONE );
+    }
+  }
+  return WEBVTT_SUCCESS;
+}
 
 WEBVTT_EXPORT webvtt_status
 webvtt_create_parser( webvtt_cue_fn on_read,
@@ -269,7 +393,7 @@ webvtt_parse_callback callback,
 {
   if( STACK_SIZE + 1 >= self->stack_alloc ) {
     webvtt_state *stack = ( webvtt_state * )webvtt_alloc0(
-      sizeof( webvtt_state ) * ( self->stack_alloc << 1 ) )
+      sizeof( webvtt_state ) * ( self->stack_alloc << 1 ) );
     webvtt_state *tmp;
     if( !stack ) {
       ERROR( WEBVTT_ALLOCATION_FAILED );
@@ -288,8 +412,8 @@ webvtt_parse_callback callback,
   self->top->type = type;
   self->top->token = ( webvtt_token )token;
   self->top->line = line;
-  self->top->back = back;
   self->top->column = column;
+  self->top->flags = 0;
   if( type == V_TEXT && data != 0 ) {
     self->top->v.text.d = ( ( webvtt_string *)data )->d;
   }
@@ -301,16 +425,10 @@ webvtt_parse_callback callback,
 static int
 do_pop( webvtt_parser self )
 {
-  int count = self->top->back;
+  int count = 1;
   self->top -= count;
-  self->top->back = 0;
-  self->popped = 1;
   return count;
 }
-
-#define CALLBACK_DATA \
-webvtt_uint last_line = self->line; \
-webvtt_uint last_column = self->column;
 
 #define PUSH0(S,V,T) \
 do { \
@@ -780,362 +898,6 @@ break
   return 0;
 }
 
-static webvtt_status
-parse_webvtt( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *ppos,
-              webvtt_uint len, webvtt_parse_mode *mode, int finish )
-{
-  webvtt_status status = WEBVTT_SUCCESS;
-  webvtt_token token;
-  webvtt_uint pos = *ppos;
-  int settings_delimiter = 0;
-  int skip_error = 0;
-  int settings_whitespace = 0;
-
-  while( pos < len ) {
-    webvtt_uint last_column, last_line, last_pos;
-    skip_error = 0;
-_next:
-    last_column = self->column;
-    last_line = self->line;
-    last_pos = pos;
-
-    /**
-     * If we're in certain states, we don't want to get a token and just
-     * want to read text instead.
-     */
-    if( SP->state == T_CUEREAD ) {
-      int v;
-      webvtt_uint old_pos = pos;
-      if( v = webvtt_string_getline( &SP->v.text, buffer, &pos,
-                                        len, 0, finish, 0 ) ) {
-        if( v < 0 ) {
-          webvtt_release_string( &SP->v.text );
-          SP->type = V_NONE;
-          POP();
-          ERROR( WEBVTT_ALLOCATION_FAILED );
-          status = WEBVTT_OUT_OF_MEMORY;
-          goto _finish;
-        }
-        /* POP the stack and let the previous frame deal with it */
-        POP();
-      }
-    }
-
-    /**
-     * Get the next token from the stream
-     *
-     * If the token is 'UNFINISHED', but we are at the end of our input
-     * data, change it to BADTOKEN because it will never be finished.
-     *
-     * Otherwise, if we are expecting further data at some point, and have
-     * an unfinished token, return and let the next chunk deal with it.
-     */
-    if( SP->state != T_CUE || !( self->popped && FRAMEUP( 1 )->state == T_CUEREAD ) ) {
-      /**
-       * We don't tokenize in certain states
-       */
-      token = webvtt_lex( self, buffer, &pos, len, finish );
-      if( token == UNFINISHED ) {
-        if( finish ) {
-          token = BADTOKEN;
-        } else if( pos == len ) {
-          goto _finish;
-        }
-      }
-    }
-_recheck:
-    switch( SP->state ) {
-      case T_INITIAL:
-        /**
-         * In the initial state:
-         * We should have WEBVTT as the first token returned,
-         * otherwise this isn't really a valid file.
-         *
-         * If we get 'WEBVTT', push us into the TAG state, where we
-         * check for a tag comment (arbitrary text following a whitespace
-         * after the WEBVTT token) until a newline
-         *
-         * If WEBVTT is not the first token, then report error and
-         * abort parsing.
-         */
-        if( token == WEBVTT ) {
-          PUSH0( T_TAG, 0, V_NONE );
-          break;
-        } else {
-          if( pos != len ) {
-            if( !skip_error ) {
-              ERROR_AT_COLUMN( WEBVTT_MALFORMED_TAG, last_column );
-              skip_error = 1;
-            }
-            status = WEBVTT_PARSE_ERROR;
-            goto _finish;
-          }
-        }
-        break;
-
-      case T_TAG:
-        /**
-         * If we have a WHITESPACE following the WEBVTT token,
-         * switch to T_TAGCOMMENT state and skip the comment.
-         * Otherwise, if it's a NEWLINE, we can just skip to
-         * the T_BODY state.
-         *
-         * Otherwise, we didn't actually have a WEBVTT token,
-         * and should feel ashamed.
-         */
-        if( token == WHITESPACE ) {
-          /* switch to comment skipper */
-          PUSH0( T_TAGCOMMENT, 0, V_NONE );
-        } else if( token == NEWLINE ) {
-          /* switch to NEWLINE counter */
-          POPBACK();
-          self->popped = 0;
-          SP->state = T_BODY;
-          PUSH0( T_EOL, 1, V_INTEGER );
-          break;
-        } else {
-          /**
-           * This wasn't preceded by an actual WEBVTT token, it's more
-           * like WEBVTTasdasd, which is not valid. Report an error,
-           * which should be considered fatal.
-           */
-          if( !skip_error ) {
-            ERROR_AT_COLUMN( WEBVTT_MALFORMED_TAG, FRAME( 1 )->column );
-            skip_error = 1;
-            status = WEBVTT_PARSE_ERROR;
-            goto _finish;
-          }
-        }
-        break;
-
-        /**
-         * COMMENT -- Read until EOL, ignore everything else
-         */
-      case T_TAGCOMMENT:
-        switch( token ) {
-          case NEWLINE:
-            /**
-             * If we encounter a newline, switch to NEWLINE mode,
-             * and set up so that when we POPBACK() we are in the
-             * T_BODY state.
-             */
-            POPBACK();
-            PUSH0( T_EOL, 1, V_INTEGER );
-            break;
-          default:
-            find_newline( buffer, &pos, len );
-            continue;
-        }
-        break;
-
-      case T_CUEID:
-        switch( token ) {
-            /**
-             * We're only really expecting a newline here --
-             * The cue id should have been read already
-             */
-          case NEWLINE:
-            SP->state = T_FROM;
-            break;
-        }
-
-        /**
-         * Count EOLs, POP when finished
-         */
-      case T_EOL:
-        switch( token ) {
-          case NEWLINE:
-            SP->v.value++;
-            break;
-          default:
-            POPBACK();
-            RECHECK
-        }
-        break;
-
-      case T_BODY:
-        if( self->popped && FRAMEUP( 1 )->state == T_EOL ) {
-          if( FRAMEUP( 1 )->v.value < 2 ) {
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_EOL, 1 );
-          }
-          FRAMEUP( 1 )->state = 0;
-          FRAMEUP( 1 )->v.cue = NULL;
-        }
-        if( token == NOTE ) {
-          PUSH0( T_COMMENT, 0, V_NONE );
-        } else if( token != NEWLINE ) {
-          webvtt_cue *cue = 0;
-          webvtt_string tk = { 0 };
-          if( WEBVTT_FAILED( status = webvtt_create_cue( &cue ) ) ) {
-            if( status == WEBVTT_OUT_OF_MEMORY ) {
-              ERROR( WEBVTT_ALLOCATION_FAILED );
-            }
-            goto _finish;
-          }
-          if( WEBVTT_FAILED( status = webvtt_create_string_with_text( &tk,
-            self->token, self->token_pos ) ) ) {
-            if( status == WEBVTT_OUT_OF_MEMORY ) {
-              ERROR( WEBVTT_ALLOCATION_FAILED );
-            }
-            webvtt_release_cue( &cue );
-            goto _finish;
-          }
-          PUSH0( T_CUE, cue, V_CUE );
-          PUSH0( T_CUEREAD, &tk, V_TEXT );
-        }
-        break;
-
-
-      case T_CUE:
-        if( self->popped && FRAMEUP( 1 )->state == T_CUEREAD ) {
-          /**
-           * We're expecting either cue-id (contains '-->') or cue
-           * params
-           */
-          webvtt_cue *cue = SP->v.cue;
-          webvtt_state *st = FRAMEUP( 1 );
-          webvtt_string text = st->v.text;
-          static const webvtt_byte separator[] = {
-            ASCII_DASH, ASCII_DASH, ASCII_GT
-          };
-
-          st->type = V_NONE;
-          st->v.cue = NULL;
-
-          /**
-           * The type should be V_TEXT. If it's not, somethings wrong.
-           *
-           * TODO: Add debug assertion
-           */
-          if( find_bytes( webvtt_string_text( &text ),
-                webvtt_string_length( &text ),
-                separator,
-                sizeof( separator ) ) ) {
-            /* It's not a cue id, we found '-->'. It can't be a second
-               cueparams line, because if we had it, we would be in
-               a different state. */
-            int v;
-            /* backup the column */
-            self->column = 1;
-            if( ( v = parse_cueparams( self, webvtt_string_text( &text ),
-                        webvtt_string_length( &text ), cue ) ) < 0 ) {
-              if( v == WEBVTT_PARSE_ERROR ) {
-                status = WEBVTT_PARSE_ERROR;
-                goto _finish;
-              }
-              webvtt_release_string( &text );
-              *mode = M_SKIP_CUE;
-              goto _finish;
-            } else {
-              webvtt_release_string( &text );
-              cue->flags |= CUE_HAVE_CUEPARAMS;
-              *mode = M_CUETEXT;
-              goto _finish;
-            }
-          } else {
-            /* It is a cue-id */
-            if( cue->flags & CUE_HAVE_ID ) {
-              /**
-               * This isn't actually a cue-id, because we already
-               * have one. It seems to be cuetext, which is occurring
-               * before cue-params
-               */
-              webvtt_release_string( &text );
-              ERROR( WEBVTT_CUE_INCOMPLETE );
-              *mode = M_SKIP_CUE;
-              goto _finish;
-            } else {
-              self->column += webvtt_string_length( &text );
-              if( WEBVTT_FAILED( status = webvtt_string_append(
-                                            &cue->id,
-                                            webvtt_string_text( &text ),
-                                            webvtt_string_length( &text ) ) ) ) {
-                webvtt_release_string( &text );
-                ERROR( WEBVTT_ALLOCATION_FAILED );
-              }
-
-              cue->flags |= CUE_HAVE_ID;
-            }
-          }
-          webvtt_release_string( &text );
-          self->popped = 0;
-        } else {
-          webvtt_cue *cue = SP->v.cue;
-          /* If we have a newline, it might be the end of the cue. */
-          if( token == NEWLINE ) {
-            if( cue->flags & CUE_HAVE_CUEPARAMS ) {
-              *mode = M_CUETEXT;
-            } else if( cue->flags & CUE_HAVE_ID ) {
-              PUSH0( T_CUEREAD, 0, V_NONE );
-            } else {
-              /* I don't think this should ever happen? */
-              POPBACK();
-            }
-          }
-        }
-        break;
-
-    }
-
-    /**
-     * reset token pos
-     */
-    self->token_pos = 0;
-  }
-
-
-_finish:
-  if( status == WEBVTT_OUT_OF_MEMORY ) {
-    cleanup_stack( self );
-  }
-  *ppos = pos;
-  return status;
-}
-
-static webvtt_status
-read_cuetext( webvtt_parser self, const webvtt_byte *b, webvtt_uint
-*ppos, webvtt_uint len, webvtt_parse_mode *mode, webvtt_bool finish )
-{
-  webvtt_status status = WEBVTT_SUCCESS;
-  webvtt_uint pos = *ppos;
-  int finished = 0;
-  do {
-    int v;
-    if( ( v = webvtt_string_getline( &self->line_buffer, b, &pos, len, &self->truncate, finish, 1 ) ) ) {
-      if( v < 0 ) {
-        status = WEBVTT_OUT_OF_MEMORY;
-        goto _finish;
-      }
-
-      if( self->line_buffer.d->length > 1 && self->line_buffer.d->text[ self->line_buffer.d->length - 1 ] == ASCII_LF ) {
-        /**
-         * finished
-         */
-        finished = 1;
-      }
-      webvtt_string_putc( &self->line_buffer, ASCII_LF );
-
-      if( pos < len ) {
-        if( b[pos] == ASCII_CR ) {
-          if( len - pos >= 2 && b[pos + 1] == ASCII_LF ) {
-            ++pos;
-          }
-          ++pos;
-        } else {
-          ++pos;
-        }
-      }
-    }
-  } while( pos < len && !finished );
-_finish:
-  *ppos = pos;
-  /* If we didn't encounter 2 successive EOLs, and it's not the final buffer in the file, notify the caller. */
-  if( pos >= len && WEBVTT_SUCCESS( status ) && !finished ) {
-    status = WEBVTT_UNFINISHED;
-  }
-  return status;
-}
-
 WEBVTT_EXPORT webvtt_status
 webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
 {
@@ -1143,8 +905,8 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
   webvtt_uint pos = 0;
   const webvtt_byte *b = ( const webvtt_byte * )buffer;
 
- while( pos < len && !WEBVTT_FAILED(status) ) {
-    status = SP->callback( self, SP, b + pos
+  while( pos < len && !WEBVTT_FAILED(status) ) {
+    status = SP->callback( self, SP, b, &pos, len );
   }
 
   return WEBVTT_SUCCESS;

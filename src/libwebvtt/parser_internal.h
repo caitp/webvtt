@@ -119,28 +119,39 @@ webvtt_lexer_state_t {
 } webvtt_lexer_state;
 
 typedef struct webvtt_state webvtt_state;
+
 typedef webvtt_status (*webvtt_parse_callback)( webvtt_parser self,
-  webvtt_state *state, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+  webvtt_state *state, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
 
 WEBVTT_INTERN webvtt_status webvtt_read_id( webvtt_parser self,
-  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
 WEBVTT_INTERN webvtt_status webvtt_read_settings( webvtt_parser self,
-  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
 WEBVTT_INTERN webvtt_status webvtt_read_cuetext( webvtt_parser self,
-  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
 WEBVTT_INTERN webvtt_status webvtt_parse_settings( webvtt_parser self,
-  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
 WEBVTT_INTERN webvtt_status webvtt_parse_header( webvtt_parser self,
-  webvtt_state *st, webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+WEBVTT_INTERN webvtt_status webvtt_parse_body( webvtt_parser self,
+  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+enum
+webvtt_header_flags {
+  WEBVTT_HEADER_START = 0,
+  WEBVTT_HEADER_TAG,
+  WEBVTT_HEADER_COMMENT,
+  WEBVTT_HEADER_EOL,
+};
 
 struct
 webvtt_state {
   webvtt_parse_callback callback;
   webvtt_token token;
   webvtt_state_value_type type;
-  webvtt_uint back;
   webvtt_uint line;
   webvtt_uint column;
+  webvtt_uint flags;
   union {
     /**
      * cue value
