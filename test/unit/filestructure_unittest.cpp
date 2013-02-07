@@ -344,13 +344,19 @@ TEST_F(FileStructure, NewlineBeforeWebVTT)
 }
 
 /*
- * Verifies that a file with payload text containing a newline in between the text
- * will finish the parsing attempt gracefully.
+ * Verifies that a file with payload text containing a newline in between the
+ * text will finish the parsing attempt gracefully.
+ *
+ * Parser should discover that the cue has ended (2 sequential EOLs)
+ * without cue-times on line 7, column 1, and report an incomplete
+ * cue.
+ *
  * From http://dev.w3.org/html5/webvtt/#parsing (12/10/2012):
  *
  * ...
  * 50. Bad cue: Discard cue.
- * 51. Bad cue loop: If position is past the end of input, then jump to the step labeled end.
+ * 51. Bad cue loop: If position is past the end of input, then jump to the
+ * step labeled end.
  */
 TEST_F(FileStructure, NewlineBetweenPayloadText)
 {
