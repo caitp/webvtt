@@ -37,7 +37,9 @@ FileParser::parse()
     final = reader.eof();
     status = parseChunk( buffer, len );
   } while( !final && !WEBVTT_FAILED(status) );
-
+  if( !WEBVTT_FAILED(status) ) {
+    status = finishParsing();
+  }
   return status == WEBVTT_SUCCESS;
 }
 

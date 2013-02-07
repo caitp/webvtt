@@ -121,8 +121,6 @@ typedef webvtt_status (*webvtt_parse_callback)( webvtt_parser self,
 
 WEBVTT_INTERN webvtt_status webvtt_read_id( webvtt_parser self,
   webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
-WEBVTT_INTERN webvtt_status webvtt_read_settings( webvtt_parser self,
-  webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
 WEBVTT_INTERN webvtt_status webvtt_read_cuetext( webvtt_parser self,
   webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
 WEBVTT_INTERN webvtt_status webvtt_parse_settings( webvtt_parser self,
@@ -177,7 +175,7 @@ webvtt_state {
 
 struct
 webvtt_parser_t {
-  webvtt_uint state;
+  webvtt_bool finish;
   webvtt_uint bytes; /* number of bytes read. */
   webvtt_uint line;
   webvtt_uint column;

@@ -19,7 +19,7 @@ public:
 
 protected:
   ::webvtt_status parseChunk( const void *chunk, webvtt_uint length );
-
+  ::webvtt_status finishParsing();
 private:
   static void WEBVTT_CALLBACK __parsedCue( void *userdata, webvtt_cue *cue );
   static int WEBVTT_CALLBACK __reportError( void *userdata, webvtt_uint line, webvtt_uint col, webvtt_error error );
