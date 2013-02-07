@@ -125,7 +125,9 @@ if(self->token_pos == sizeof(self->token) - 1 ) \
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_lex_word( webvtt_parser self, webvtt_string *str, const webvtt_byte *buffer, webvtt_uint *ppos, webvtt_uint length, int finish )
+webvtt_lex_word( webvtt_parser self, webvtt_string *str,
+  const webvtt_byte *buffer, webvtt_uint *ppos, webvtt_uint length,
+  webvtt_bool finish )
 {
   webvtt_status status = WEBVTT_SUCCESS;
   webvtt_uint pos = *ppos;
@@ -167,7 +169,8 @@ _finished:
 }
 
 WEBVTT_INTERN webvtt_token
-webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, webvtt_uint length, int finish )
+webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos,
+  webvtt_uint length, webvtt_bool finish )
 {
   while( *pos < length ) {
     webvtt_byte c = buffer[(*pos)++];
@@ -480,7 +483,7 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
    * If we got here, we've reached the end of the buffer.
    * We therefore can attempt to finish up
    */
-  if( finish ) {
+  if( finish && self->token_pos ) {
     switch( self->tstate ) {
       case L_DIGIT0:
         RETURN(INTEGER)

@@ -2,6 +2,7 @@
 #include "cuetext_internal.h"
 #include "cue_internal.h"
 #include <string.h>
+#include <assert.h>
 
 #define _ERROR(X) do { if( skip_error == 0 ) { ERROR(X); } } while(0)
 
@@ -25,74 +26,418 @@
 #define BUFFER (self->buffer + self->position)
 #define MALFORMED_TIME ((webvtt_timestamp_t)-1.0)
 
-static int find_bytes( const webvtt_byte *buffer, webvtt_uint len, const webvtt_byte *sbytes, webvtt_uint slen );
+/**
+ * Helpers to figure out what state we're on
+ */
+#define SP (self->top)
+#define AT_BOTTOM (self->top == self->stack)
+#define ON_HEAP (self->stack_alloc == sizeof(p->astack) / sizeof(p->astack[0]))
+#define STACK_SIZE ((webvtt_uint)(self->top - self->stack))
+#define FRAME(i) (self->top - (i))
+#define FRAMEUP(i) (self->top + (i))
+#define RECHECK goto _recheck;
+#define BACK (SP->back)
+
+static void finish_cue( webvtt_parser self, webvtt_cue **pcue );
+
+/**
+ * More state stack helpers
+ */
+static webvtt_status
+do_push( webvtt_parser self, webvtt_uint token, webvtt_parse_callback callback,
+  void *data, webvtt_state_value_type type, webvtt_uint line,
+  webvtt_uint column )
+{
+  if( STACK_SIZE + 1 >= self->stack_alloc ) {
+    webvtt_state *stack = ( webvtt_state * )webvtt_alloc0(
+      sizeof( webvtt_state ) * ( self->stack_alloc << 1 ) );
+    webvtt_state *tmp;
+    if( !stack ) {
+      ERROR( WEBVTT_ALLOCATION_FAILED );
+      return WEBVTT_OUT_OF_MEMORY;
+    }
+    memcpy( stack, self->stack, sizeof( webvtt_state ) * self->stack_alloc );
+    tmp = self->stack;
+    self->stack = stack;
+    self->top = stack + ( self->top - tmp );
+    if( tmp != self->astack ) {
+      webvtt_free( tmp );
+    }
+  }
+  ++self->top;
+  self->top->callback = callback;
+  self->top->type = type;
+  self->top->token = ( webvtt_token )token;
+  self->top->line = line;
+  self->top->column = column;
+  self->top->flags = 0;
+  if( type == V_TEXT && data != 0 ) {
+    self->top->v.text.d = ( ( webvtt_string *)data )->d;
+  }
+  else {
+    self->top->v.cue = ( webvtt_cue * )data;
+  }
+  return WEBVTT_SUCCESS;
+}
+static int
+do_pop( webvtt_parser self )
+{
+  int count = 1;
+  self->top -= count;
+  return count;
+}
+
+#define PUSH(S,V,T) \
+do { \
+  self->popped = 0; \
+  if( do_push(self,token,(S),(void*)(V),T,last_line, last_column) \
+    == WEBVTT_OUT_OF_MEMORY ) \
+    return WEBVTT_OUT_OF_MEMORY; \
+  } while(0)
+
+#define POP() \
+do \
+{ \
+  --(self->top); \
+  self->popped = 1; \
+} while(0)
+#define POPBACK() do_pop(self)
+
+static int find_bytes( const webvtt_byte *buffer, webvtt_uint len,
+  const webvtt_byte *sbytes, webvtt_uint slen );
 static webvtt_int64 parse_int( const webvtt_byte **pb, int *pdigits );
-static int parse_timestamp( webvtt_parser self, const webvtt_byte *b, webvtt_timestamp *result );
+static int parse_timestamp( webvtt_parser self, const webvtt_byte *b,
+  webvtt_timestamp *result );
 
 WEBVTT_INTERN webvtt_status
 webvtt_read_id( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint length )
 {
+  return WEBVTT_PARSE_ERROR;
+}
+
+static webvtt_status
+webvtt_get_separator( webvtt_parser self, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+  webvtt_uint last_column;
+  webvtt_token token;
+
+  last_column = self->column;
+  token = webvtt_lex( self, text, pos, len, 1 );
+
+  if( token == SEPARATOR ) {
+    ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
+  } else if( token != WHITESPACE ) {
+    /* TODO: flag this as more serious error */
+    ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
+  }
+
+  FINISH_TOKEN
+  last_column = self->column;
+  token = webvtt_lex( self, text, pos, len, 1 );
+
+  if( token != SEPARATOR ) {
+    if( token == TIMESTAMP ) {
+      ERROR_AT_COLUMN( WEBVTT_MISSING_CUETIME_SEPARATOR, last_column );
+    } else {
+      ERROR_AT_COLUMN( WEBVTT_EXPECTED_CUETIME_SEPARATOR, last_column );
+    }
+  }
+
+  FINISH_TOKEN
+  last_column = self->column;
+  token = webvtt_lex( self, text, pos, len, 1 );
+
+  if( token == SEPARATOR ) {
+    ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
+  } else if( token != WHITESPACE ) {
+    /* TODO: flag this as more serious error */
+    ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
+  }
+
+  FINISH_TOKEN
+  return WEBVTT_SUCCESS;
+}
+
+static webvtt_status
+webvtt_get_timestamp( webvtt_parser self, webvtt_timestamp *result,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len,
+  webvtt_bool finish )
+{
+  webvtt_uint last_column;
+  webvtt_token token;
+retry:
+  last_column = self->column;
+  token = webvtt_lex( self, text, pos, len, finish );
+  if( token == TIMESTAMP ) {
+    if( !parse_timestamp( self, self->token, result ) ) {
+      if( BAD_TIMESTAMP( *result ) ) {
+        ERROR_AT_COLUMN( WEBVTT_EXPECTED_TIMESTAMP, last_column );
+      } else {
+        ERROR_AT_COLUMN( WEBVTT_MALFORMED_TIMESTAMP, last_column );
+      }
+      if( !ASCII_ISDIGIT( self->token[self->token_pos - 1] ) ) {
+        while( *pos < len && text[*pos] != 0x09 && text[*pos] != 0x20 ) {
+          ++pos; 
+        }
+      }
+      FINISH_TOKEN
+    } else {
+      FINISH_TOKEN
+      return WEBVTT_SUCCESS;
+    }
+  } else if( token == WHITESPACE ) {
+    FINISH_TOKEN
+    ERROR_AT_COLUMN( WEBVTT_UNEXPECTED_WHITESPACE, last_column );
+    goto retry;
+  } else {
+    FINISH_TOKEN
+    ERROR_AT_COLUMN( WEBVTT_EXPECTED_TIMESTAMP, last_column );
+  }
+  return WEBVTT_PARSE_ERROR;
+}
+
+/**
+ * Read a line for a skipped cue
+ */
+WEBVTT_INTERN webvtt_status
+webvtt_skip_cue_line( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
+{
+  int v;
+  if( self->finish ) {
+    POP();
+    return WEBVTT_SUCCESS;
+  }
+  
+  if( st->type != V_TEXT ) {
+    webvtt_init_string( &st->v.text );
+    st->type = V_TEXT;
+  }
+
+  v = webvtt_string_getline( &st->v.text, text, pos, len, 0, 0, 0 );
+  if( v < 0 ) {
+    st->type = V_NONE;
+    webvtt_release_string( &st->v.text );
+    ERROR( WEBVTT_ALLOCATION_FAILED );
+    POP();
+    return WEBVTT_OUT_OF_MEMORY;
+  } else if( v > 0 ) {
+    POP();
+  }
+  return WEBVTT_SUCCESS;
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_read_settings( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
-  webvtt_uint *pos, webvtt_uint length )
+webvtt_skip_cue( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
 {
+  webvtt_token token = UNFINISHED;
+  webvtt_state *up = FRAMEUP(1);
+  CALLBACK_DATA
+
+  if( self->finish ) {
+    if( up->type == V_TEXT ) {
+      webvtt_release_string( &up->v.text );
+      up->type = V_NONE;
+    }
+    POP();
+    return WEBVTT_SUCCESS;
+  }
+
+  if( st->type != V_INTEGER ) {
+    st->type = V_INTEGER;
+    st->v.value = 0;
+  } else if( up->type == V_TEXT ) {
+    /* End of line was found */
+    if( find_bytes( webvtt_string_text( &up->v.text ),
+      webvtt_string_length( &up->v.text ), separator, 3 ) ) {
+      if( st->v.value < 2 ) {
+        ERROR( WEBVTT_EXPECTED_EOL );
+      }
+
+      st->callback = &webvtt_parse_settings;
+      st->v.text.d = up->v.text.d;
+      st->type = V_TEXT;
+      up->type = V_NONE;
+      up->v.text.d = 0;
+    } else {
+      up->type = V_NONE;
+      webvtt_release_string( &up->v.text );
+    }
+  }
+
+  if( up->type == V_NONE ) {
+    webvtt_uint last_pos = *pos;
+    last_column = self->column;
+    if( webvtt_lex( self, text, pos, len, 0 ) == NEWLINE ) {
+      st->v.value++;
+      return WEBVTT_SUCCESS;
+    } else {
+      *pos = last_pos;
+      self->column = last_column;
+    }
+  }
+
+  PUSH( &webvtt_skip_cue_line, 0, V_NONE );
+  return WEBVTT_SUCCESS;
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_read_cuetext( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
-  webvtt_uint *pos, webvtt_uint length )
+webvtt_read_settings( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
 {
+  int v;
+  webvtt_uint last_column = self->column;
+  webvtt_uint last_line = self->line;
+  webvtt_token token = UNFINISHED;
+  if( st->type == V_NONE ) {
+    webvtt_init_string( &st->v.text );
+    st->type = V_TEXT;
+  }
+
+  if( self->finish ) {
+    goto check_settings;
+  }
+
+  v = webvtt_string_getline( &st->v.text, text, pos, len, 0, 0, 0 );
+  
+  if( v < 0 ) {
+    ERROR( WEBVTT_ALLOCATION_FAILED );
+    return WEBVTT_OUT_OF_MEMORY;
+  }
+
+  if( v > 0 ) {
+    /* skip EOL sequence */
+    webvtt_lex( self, text, pos, len, self->finish );
+    FINISH_TOKEN
+
+    check_settings:
+    if( webvtt_string_length( &st->v.text ) == 0 ) {
+      ERROR( WEBVTT_CUE_INCOMPLETE );
+      /* TODO: skip this cue. */
+      return WEBVTT_PARSE_ERROR;
+    }
+
+    if( find_bytes( webvtt_string_text( &st->v.text ), webvtt_string_length( &st->v.text ),
+          separator, sizeof( separator ) ) ) {
+      st->callback = webvtt_parse_settings;
+      return WEBVTT_SUCCESS;
+    } else {
+      ERROR( WEBVTT_CUE_INCOMPLETE );
+      /* TODO: skip this cue */
+      if( st->type == V_TEXT ) {
+        webvtt_release_string( &st->v.text );
+        st->v.text.d = 0;
+      }
+      st->type = V_NONE;
+      POP();
+      if( SP->type == V_CUE ) {
+        webvtt_release_cue( &SP->v.cue );
+        SP->type = V_NONE;
+      }
+      PUSH( &webvtt_skip_cue, 0, V_NONE );
+    }
+  }
+  return WEBVTT_SUCCESS;
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_parse_settings( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
-  webvtt_uint *pos, webvtt_uint length )
+webvtt_parse_settings( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text_, webvtt_uint *pos_, webvtt_uint length )
 {
+  /* parse settings deals with text in a webvtt_string --
+     because of this, 'finish' means nothing (it should already be
+     finished) */
+  webvtt_uint pos = 0;
+  webvtt_state *up = FRAME(1);
+  const webvtt_byte *text;
+  webvtt_cue *cue;
+  webvtt_uint len;
+  webvtt_status status;
+  assert( st->type == V_TEXT );
+  text = webvtt_string_text( &st->v.text );
+  len = webvtt_string_length( &st->v.text );
+  
+  if( up->type != V_CUE ) {
+    up->type = V_CUE;
+    webvtt_create_cue( &up->v.cue );
+  }
+
+  cue = up->v.cue;
+
+  if( WEBVTT_FAILED( status = webvtt_get_timestamp( self, &cue->from, text,
+    &pos, len, 1 ) ) ) {
+    goto finish;
+  }
+  
+  if( WEBVTT_FAILED( status = webvtt_get_separator( self, text, &pos,
+    len ) ) ) {
+    goto finish;
+  }
+
+  if( WEBVTT_FAILED( status = webvtt_get_timestamp( self, &cue->until, text,
+    &pos, len, 1 ) ) ) {
+    goto finish;
+  }
+
+  /* Mark that we've read cue params */
+  up->v.cue->flags |= CUE_HAVE_CUEPARAMS;
+  
+  /* Cleanup */
+finish:
+  webvtt_release_string( &st->v.text );
+  st->type = V_NONE;
+  POP();
+  return status;
 }
 
 /**
  * Read a WEBVTT header
  */
 WEBVTT_INTERN webvtt_status
-webvtt_parse_header( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
-  webvtt_uint *pos, webvtt_uint len )
+webvtt_parse_header( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
 {
   int v;
   webvtt_token token;
+  CALLBACK_SETUP
   while( *pos < len )
   {
     CALLBACK_DATA
     switch( st->flags )
     {
     case 0:
-      token = webvtt_lex( self, text, pos, len, 0 );
+      token = webvtt_lex( self, text, pos, len, self->finish );
       switch( token ) {
         case UNFINISHED:
           return WEBVTT_SUCCESS;
     
         case WEBVTT:
           st->flags = WEBVTT_HEADER_TAG;
+          FINISH_TOKEN
           break;
 
         default:
-          ERROR(WEBVTT_MALFORMED_TAG);
+          ERROR_AT_COLUMN(WEBVTT_MALFORMED_TAG,last_column);
           return WEBVTT_PARSE_ERROR;
       }
       break;
     case WEBVTT_HEADER_TAG:
-      token = webvtt_lex( self, text, pos, len, 0 );
+      token = webvtt_lex( self, text, pos, len, self->finish );
       switch( token ) {
+        case UNFINISHED:
+          return WEBVTT_SUCCESS;
+
         case WHITESPACE:
           st->flags = WEBVTT_HEADER_COMMENT;
           break;
 
         case NEWLINE:
-          st->flags = 0;
-          st->callback = &webvtt_parse_body;
-          return WEBVTT_SUCCESS;
+          st->flags = WEBVTT_HEADER_EOL;
+          FINISH_TOKEN
+          break;
 
         default:
           ERROR(WEBVTT_MALFORMED_TAG);
@@ -101,8 +446,17 @@ webvtt_parse_header( webvtt_parser self, webvtt_state *st, const webvtt_byte *te
       break;
 
     case WEBVTT_HEADER_COMMENT:
-      st->type = V_TEXT;
-      webvtt_init_string( &st->v.text );
+      if( self->finish ) {
+        if( st->type == V_TEXT ) {
+          webvtt_release_string( &st->v.text );
+          st->type = V_NONE;
+        }
+        return WEBVTT_SUCCESS;
+      }
+      if( st->type != V_TEXT ) {
+        st->type = V_TEXT;
+        webvtt_init_string( &st->v.text );
+      }
       v = webvtt_string_getline( &st->v.text, text, pos, len, 0, 0, 0 );
       if( v < 0 ) {
         webvtt_release_string( &st->v.text );
@@ -110,7 +464,7 @@ webvtt_parse_header( webvtt_parser self, webvtt_state *st, const webvtt_byte *te
         return WEBVTT_OUT_OF_MEMORY;
       }
       if( v > 0 ) {
-        if( webvtt_lex( self, text, pos, len, 0 ) == NEWLINE ) {
+        if( webvtt_lex( self, text, pos, len,  self->finish  ) == NEWLINE ) {
           webvtt_release_string( &st->v.text );
           st->flags = WEBVTT_HEADER_EOL;
         }
@@ -118,23 +472,29 @@ webvtt_parse_header( webvtt_parser self, webvtt_state *st, const webvtt_byte *te
       break;
 
     case WEBVTT_HEADER_EOL:
-      token = webvtt_lex( self, text, pos, len, 0 );
+      if( self->finish ) {
+        return WEBVTT_SUCCESS;
+      }
+      token = webvtt_lex( self, text, pos, len, self->finish  );
       switch( token ) {
         case NEWLINE:
+          FINISH_TOKEN
           st->flags = 0;
           st->callback = &webvtt_parse_body;
           return WEBVTT_SUCCESS;
 
         default:
-          *pos -= self->token_pos;
+          *pos = *pos - self->token_pos;
+          FINISH_TOKEN
         case BADTOKEN:
           /* error, expected eol */
-          ERROR(WEBVTT_EXPECTED_EOL);
+          ERROR_AT_COLUMN(WEBVTT_EXPECTED_EOL,last_column);
           st->callback = &webvtt_parse_body;
           return WEBVTT_SUCCESS;
       }
     }
   }
+  return WEBVTT_SUCCESS;
 }
 
 /**
@@ -147,9 +507,10 @@ webvtt_parse_id( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   int v;
   if( st->type == V_NONE ) {
     webvtt_init_string( &st->v.text );
+    st->type = V_TEXT;
   }
   
-  v = webvtt_string_getline( &st->v.text, text, pos, len, 0, 0, 0 );
+  v = webvtt_string_getline( &st->v.text, text, pos, len, 0, self->finish, 0 );
   
   if( v < 0 ) {
     ERROR( WEBVTT_ALLOCATION_FAILED );
@@ -157,21 +518,165 @@ webvtt_parse_id( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   }
 
   if( v > 0 ) {
-    static const webvtt_byte separator[] = {
-      ASCII_DASH, ASCII_DASH, ASCII_GT
-    };
+    self->column += webvtt_string_length( &st->v.text );
+    self->bytes += webvtt_string_length( &st->v.text );
+
+    /* skip EOL */
+    webvtt_lex( self, text, pos, len, self->finish );
+    FINISH_TOKEN
     if( find_bytes( webvtt_string_text( &st->v.text ), webvtt_string_length( &st->v.text ),
           separator, sizeof( separator ) ) ) {
       st->callback = webvtt_parse_settings;
       return WEBVTT_SUCCESS;
+    } else {
+      webvtt_state *up = FRAME(1);
+      if( up->type == V_NONE ) {
+        webvtt_create_cue( &up->v.cue );
+        up->type = V_CUE;
+      }
+      up->v.cue->id.d = st->v.text.d;
+      up->v.cue->flags |= CUE_HAVE_ID;
+      st->type = V_NONE;
+      st->v.text.d = 0;
+      st->callback = 0;
+      POP();
     }
-  } else {
-    /**
-     * TODO: Create new Cue object if none exists, and
-     * give ownership of the cue id string to it.
-     * FRAME(1)->
-     */
   }
+  return WEBVTT_SUCCESS;
+}
+
+/**
+ * Read line of cuetext
+ */
+WEBVTT_INTERN webvtt_status
+webvtt_read_cuetext_line( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
+{
+  int v;
+  if( st->type == V_NONE ) {
+    webvtt_init_string( &st->v.text );
+    st->type = V_TEXT;
+  } else if( self->finish ) {
+    POP();
+    return WEBVTT_SUCCESS;
+  }
+
+  v = webvtt_string_getline( &st->v.text, text, pos, len, 0, self->finish, 0 );
+  if( v < 0 ) {
+    /* probably needs adjustment */
+    ERROR( WEBVTT_ALLOCATION_FAILED );
+    return WEBVTT_OUT_OF_MEMORY;
+  } else if( v > 0 ) {
+    /* skip EOL sequence */
+    if( self->finish || webvtt_lex( self, text, pos, len, self->finish ) == NEWLINE ) {
+      FINISH_TOKEN
+      POP();
+    }
+  }
+  
+  return WEBVTT_SUCCESS;
+}
+
+/**
+ * Read cuetext
+ */
+WEBVTT_INTERN webvtt_status
+webvtt_read_cuetext( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
+{
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+  webvtt_token token = UNFINISHED;
+  int finished_cue = 0;
+  webvtt_state *up = FRAMEUP(1);
+  webvtt_status status;
+  if( st->type == V_NONE ) {
+    webvtt_init_string( &st->v.text );
+    st->type = V_TEXT;
+  }
+
+  if( up->type == V_TEXT ) {
+    if( webvtt_string_length( &up->v.text ) == 0 ) {
+      /* This cue is finished, a 0-length line indicates 2 sequential EOLs */
+      webvtt_release_string( &up->v.text );
+      up->type = V_NONE;
+      finished_cue = 1;
+    } else {
+      if( find_bytes( webvtt_string_text( &up->v.text ),
+        webvtt_string_length( &up->v.text ), separator,
+        sizeof( separator ) ) ) {
+        if( st->type != V_TEXT || webvtt_string_length( &st->v.text ) == 0 ) {
+          if( st->type == V_TEXT ) {
+            webvtt_release_string( &up->v.text );
+            webvtt_release_string( &st->v.text );
+            up->type = st->type = V_NONE;
+            POP();
+          }
+          /* This error is probably not correct. */
+          ERROR( WEBVTT_CUE_INCOMPLETE );
+        } else {
+          /* If a separator is found, we need to move onto the next cue. */
+          status = webvtt_parse_cuetext( self, FRAME(1)->v.cue, &st->v.text, 
+            self->finish );
+          webvtt_release_string( &st->v.text );
+          st->v.text.d = up->v.text.d;
+          up->v.text.d = 0;
+          up->type = V_NONE;
+          finish_cue( self, &FRAME(1)->v.cue );
+          FRAME(1)->type = V_NONE;
+          FRAME(1)->v.cue = 0;
+          st->callback = &webvtt_parse_settings;
+          return status;
+        }
+        return WEBVTT_SUCCESS;;
+      } else {
+        if( WEBVTT_FAILED( status = webvtt_string_append_string( &st->v.text, 
+          &up->v.text ) ) ) {
+          webvtt_release_string( &up->v.text );
+          webvtt_release_string( &st->v.text );
+          up->type = st->type = V_NONE;
+          if( status == WEBVTT_OUT_OF_MEMORY ) {
+            ERROR( WEBVTT_ALLOCATION_FAILED );
+          }
+          return status;
+        } else {
+          webvtt_release_string( &up->v.text );
+          up->type = V_NONE;
+          if( WEBVTT_FAILED( status = webvtt_string_putc( &st->v.text,
+            ASCII_LF ) ) ) {
+            webvtt_release_string( &st->v.text );
+            st->type = V_NONE;
+            if( status == WEBVTT_OUT_OF_MEMORY ) {
+              ERROR( WEBVTT_ALLOCATION_FAILED );
+            }
+            return status;
+          }
+          if( !self->finish ) {
+            PUSH( &webvtt_read_cuetext_line, 0, V_NONE );
+          } else {
+            finished_cue = 1;
+          }
+        }
+      }
+    }
+  }
+
+  if( finished_cue ) {
+    /* If a separator is found, we need to move onto the next cue. */
+    status = webvtt_parse_cuetext( self, FRAME(1)->v.cue, &st->v.text, 
+      self->finish );
+    webvtt_release_string( &st->v.text );
+    st->v.text.d = up->v.text.d;
+    up->v.text.d = 0;
+    up->type = V_NONE;
+    finish_cue( self, &FRAME(1)->v.cue );
+    FRAME(1)->type = V_NONE;
+    FRAME(1)->v.cue = 0;
+    POP();
+    return status;
+  }
+
+  return WEBVTT_SUCCESS;
 }
 
 /**
@@ -181,6 +686,37 @@ WEBVTT_INTERN webvtt_status
 webvtt_parse_cue( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint len )
 {
+  webvtt_token token = UNFINISHED;
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+
+  if( st->type == V_CUE ) {
+    if( ( st->v.cue->flags & CUE_HAVE_CUEPARAMS ) == 0 ) {
+      if( self->finish ) {
+        ERROR( WEBVTT_CUE_INCOMPLETE );
+        webvtt_release_cue( &st->v.cue );
+        st->type = V_NONE;
+        st->callback = 0;
+        POP();
+        return WEBVTT_SUCCESS;
+      }
+      PUSH( &webvtt_read_settings, 0, V_NONE );
+      return WEBVTT_SUCCESS;
+    } else {
+      /* read cuetext */
+      if( !self->finish ) {
+        PUSH( &webvtt_read_cuetext, 0, V_NONE );
+        PUSH( &webvtt_read_cuetext_line, 0, V_NONE );
+      } else {
+        webvtt_release_cue( &st->v.cue );
+        st->type = V_NONE;
+        POP();
+      }
+    }
+  } else {
+    POP();
+  }
+  return WEBVTT_SUCCESS;
 }
 
 /**
@@ -190,9 +726,11 @@ WEBVTT_INTERN webvtt_status
 webvtt_parse_body( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint len )
 {
+  webvtt_token token;
+  CALLBACK_SETUP
   while( *pos < len ) {
     CALLBACK_DATA
-    webvtt_token token = webvtt_lex( self, text, pos, len. 0 );
+    token = webvtt_lex( self, text, pos, len, self->finish );
     switch( token ) {
     case NEWLINE:
       break;
@@ -200,8 +738,11 @@ webvtt_parse_body( webvtt_parser self, webvtt_state *st, const webvtt_byte *text
     default:
        self->column -= self->token_pos;
        self->bytes -= self->token_pos;
+       *pos -= self->token_pos;
+       FINISH_TOKEN
        PUSH( &webvtt_parse_cue, 0, V_NONE );
        PUSH( &webvtt_parse_id, 0, V_NONE );
+       return WEBVTT_SUCCESS;
     }
   }
   return WEBVTT_SUCCESS;
@@ -317,6 +858,7 @@ webvtt_delete_parser( webvtt_parser self )
   }
 }
 
+
 #define BEGIN_STATE(State) case State: {
 #define END_STATE } break;
 #define IF_TOKEN(Token,Actions) case Token: { Actions } break;
@@ -371,88 +913,6 @@ find_bytes( const webvtt_byte *buffer, webvtt_uint len, const webvtt_byte *sbyte
   } while( len-- >= slen && *buffer++ );
   return 0;
 }
-
-/**
- * Helpers to figure out what state we're on
- */
-#define SP (self->top)
-#define AT_BOTTOM (self->top == self->stack)
-#define ON_HEAP (self->stack_alloc == sizeof(p->astack) / sizeof(p->astack[0]))
-#define STACK_SIZE ((webvtt_uint)(self->top - self->stack))
-#define FRAME(i) (self->top - (i))
-#define FRAMEUP(i) (self->top + (i))
-#define RECHECK goto _recheck;
-#define BACK (SP->back)
-/**
- * More state stack helpers
- */
-static webvtt_status
-do_push( webvtt_parser self, webvtt_uint token, webvtt_uint back,
-webvtt_parse_callback callback,
-  void *data, webvtt_state_value_type type, webvtt_uint line, webvtt_uint column )
-{
-  if( STACK_SIZE + 1 >= self->stack_alloc ) {
-    webvtt_state *stack = ( webvtt_state * )webvtt_alloc0(
-      sizeof( webvtt_state ) * ( self->stack_alloc << 1 ) );
-    webvtt_state *tmp;
-    if( !stack ) {
-      ERROR( WEBVTT_ALLOCATION_FAILED );
-      return WEBVTT_OUT_OF_MEMORY;
-    }
-    memcpy( stack, self->stack, sizeof( webvtt_state ) * self->stack_alloc );
-    tmp = self->stack;
-    self->stack = stack;
-    self->top = stack + ( self->top - tmp );
-    if( tmp != self->astack ) {
-      webvtt_free( tmp );
-    }
-  }
-  ++self->top;
-  self->top->callback = callback;
-  self->top->type = type;
-  self->top->token = ( webvtt_token )token;
-  self->top->line = line;
-  self->top->column = column;
-  self->top->flags = 0;
-  if( type == V_TEXT && data != 0 ) {
-    self->top->v.text.d = ( ( webvtt_string *)data )->d;
-  }
-  else {
-    self->top->v.cue = ( webvtt_cue * )data;
-  }
-  return WEBVTT_SUCCESS;
-}
-static int
-do_pop( webvtt_parser self )
-{
-  int count = 1;
-  self->top -= count;
-  return count;
-}
-
-#define PUSH0(S,V,T) \
-do { \
-    self->popped = 0; \
-    if( do_push(self,token,BACK+1,(S),(void*)(V),T,last_line, last_column) \
-      == WEBVTT_OUT_OF_MEMORY ) \
-      return WEBVTT_OUT_OF_MEMORY; \
-  } while(0)
-
-#define PUSH(S,B,V,T) \
-do { \
-  self->popped = 0; \
-  if( do_push(self,token,(B),(S),(void*)(V),T,last_line, last_column) \
-    == WEBVTT_OUT_OF_MEMORY ) \
-    return WEBVTT_OUT_OF_MEMORY; \
-  } while(0)
-
-#define POP() \
-do \
-{ \
-  --(self->top); \
-  self->popped = 1; \
-} while(0)
-#define POPBACK() do_pop(self)
 
 WEBVTT_INTERN int
 parse_cueparams( webvtt_parser self, const webvtt_byte *buffer,
@@ -909,7 +1369,36 @@ webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len )
     status = SP->callback( self, SP, b, &pos, len );
   }
 
-  return WEBVTT_SUCCESS;
+  return status;
+}
+
+WEBVTT_EXPORT webvtt_status
+webvtt_finish_parsing( webvtt_parser self )
+{
+  webvtt_status status = WEBVTT_SUCCESS;
+  webvtt_byte buffer[] = { '\0' };
+  webvtt_uint pos = 0;
+  if( !self ) {
+    return WEBVTT_INVALID_PARAM;
+  }
+  self->finish = 1;
+  while( !WEBVTT_FAILED(status) ) {
+    webvtt_state *st = SP;
+    webvtt_parse_callback cb = st->callback;
+    status = st->callback( self, st, buffer, &pos, 0 );
+    if( cb == &webvtt_read_cuetext ) {
+      if( st->type == V_TEXT ) {
+        webvtt_release_string( &st->v.text );
+      }
+      st->type = V_NONE;
+      --self->top;
+    } else if( cb == &webvtt_parse_body
+      || cb == &webvtt_parse_header ) {
+      break;
+    }
+  }
+
+  return status;
 }
 
 #undef SP

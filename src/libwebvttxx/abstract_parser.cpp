@@ -25,6 +25,12 @@ AbstractParser::parseChunk( const void *chunk, webvtt_uint length )
   return webvtt_parse_chunk( parser, chunk, length );
 }
 
+::webvtt_status
+AbstractParser::finishParsing()
+{
+  return webvtt_finish_parsing( parser );
+}
+
 void WEBVTT_CALLBACK
 AbstractParser::__parsedCue( void *userdata, webvtt_cue *pcue )
 {
