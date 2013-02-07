@@ -356,7 +356,7 @@ TEST_F(FileStructure, NewlineBetweenPayloadText)
 {
   loadVtt( "filestructure/newline-between-payload-text.vtt", 1 );
   ASSERT_EQ( 1, errorCount() ) << "This file should contain 1 error.";
-  assertEquals( getError( 0 ), WEBVTT_CUE_INCOMPLETE, 7, 13 );
+  assertEquals( getError( 0 ), WEBVTT_CUE_INCOMPLETE, 7, 1 );
 }
 
 /*
