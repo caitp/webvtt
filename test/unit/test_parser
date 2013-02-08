@@ -13,24 +13,27 @@ class ItemCounterParser : public FileParser
 {
 public:
   ItemCounterParser( const char *fileName )
-    : FileParser( fileName ),
-      cue_count(0),
-      error_count(0)
+  : FileParser( fileName ),
+    cue_count(0),
+    error_count(0)
   {
   }
-	
+
   virtual ~ItemCounterParser() {}
   virtual bool reportError( const Error &error )
   {
     ++error_count;
+    if( error.error() == WEBVTT_MALFORMED_TAG ) {
+      return false;
+    }
     return true;
   }
-	
+
   virtual void parsedCue( Cue &cue )
   {
     ++cue_count;
   }
-	
+
   /**
    * return the number of cues read from the file
    */
@@ -38,7 +41,7 @@ public:
   {
     return cue_count;
   }
-	
+
   /**
    * return the number of errors encountered in the file
    */
@@ -46,7 +49,7 @@ public:
   {
     return error_count;
   }
-	
+
 private:
   uint cue_count;
   uint error_count;
@@ -56,68 +59,74 @@ class ItemStorageParser : public ItemCounterParser
 {
 public:
   ItemStorageParser( const char *fileName )
-    : ItemCounterParser( fileName )
+  : ItemCounterParser( fileName )
   {
   }
-	
+
   virtual ~ItemStorageParser()
   {
   }
-	
+
   virtual bool reportError( const Error &error )
   {
-    ItemCounterParser::reportError(error);
     errors.push_back( error );
+    if( !ItemCounterParser::reportError(error) ) {
+      return false;
+    }
     return true;
   }
-	
+
   virtual void parsedCue( Cue &cue )
   {
     ItemCounterParser::parsedCue( cue );
     cues.push_back( cue );
   }
-	
+
   const Cue& getCue( uint i ) const
   {
-    if( uint(i) >= cues.size() ) {
-      throw std::out_of_range( "ItemStorageParser::getCue: "
-        "index out of bounds" );
+    if( uint(i) >= cues.size() )
+    {
+      throw std::out_of_range(
+        "ItemStorageParser::getCue: index out of bounds"
+      );
     }
     return cues[i];
   }
-	
+
   const Error& getError( uint i ) const
   {
-    if( uint(i) >= errors.size() ) {
-      throw std::out_of_range( "ItemStorageParser::getError: "
-        "index out of bounds" );
+    if( uint(i) >= errors.size() )
+    {
+      throw std::out_of_range(
+        "ItemStorageParser::getError: index out of bounds"
+      );
     }
     return errors[i];
   }
-	
+
   typedef std::vector<Cue>::const_iterator CueIterator;
   typedef std::vector<Error>::const_iterator ErrorIterator;
-	
+
   CueIterator firstCue() const
   {
     return cues.begin();
   }
-	
+
   CueIterator lastCue() const
   {
     return cues.end();
   }
-	
+
   ErrorIterator firstError() const
   {
     return errors.begin();
   }
-	
+
   ErrorIterator lastError() const
   {
     return errors.end();
   }
-	
+
 private:
   std::vector<Cue> cues;
   std::vector<Error> errors;

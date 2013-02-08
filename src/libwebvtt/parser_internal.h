@@ -177,8 +177,14 @@ webvtt_state {
   } v;
 };
 
+typedef enum
+webvtt_parser_flags_t {
+  HAVE_MALFORMED_TAG = 0x80000000,
+} webvtt_parser_flags;
+
 struct
 webvtt_parser_t {
+  webvtt_uint flags;
   webvtt_bool finish;
   webvtt_uint bytes; /* number of bytes read. */
   webvtt_uint line;
@@ -218,18 +224,15 @@ WEBVTT_INTERN webvtt_status webvtt_lex_word( webvtt_parser self, webvtt_string *
 
 #define BAD_TIMESTAMP(ts) ( ( ts ) == 0xFFFFFFFFFFFFFFFF )
 
-#define ERROR(Code) \
+#define ERROR_AT(Code,Line, Column) \
 do \
 { \
-  if( !self->error || self->error(self->userdata,self->line,self->column,Code) < 0 ) \
+  if( !self->error || self->error(self->userdata,(Line),(Column),Code) < 0 ) \
     return WEBVTT_PARSE_ERROR; \
 } while(0)
 
-#define ERROR_AT_COLUMN(Code,Column) \
-do \
-{ \
-  if( !self->error || self->error(self->userdata,self->line,(Column),Code) < 0 ) \
-    return WEBVTT_PARSE_ERROR; \
-} while(0)
+#define ERROR(Code) ERROR_AT( ( Code ), self->line, self->column )
+
+#define ERROR_AT_COLUMN(Code,Column) ERROR_AT( ( Code ), self->line, ( Column ) )
 
 #endif
