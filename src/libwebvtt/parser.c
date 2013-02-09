@@ -99,13 +99,6 @@ static int find_bytes( const webvtt_byte *buffer, webvtt_uint len, const webvtt_
 static webvtt_status webvtt_skipwhite( const webvtt_byte *buffer, webvtt_uint *pos, webvtt_uint len );
 static webvtt_int64 parse_int( const webvtt_byte **pb, int *pdigits );
 
-WEBVTT_INTERN webvtt_status
-webvtt_read_id( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
-  webvtt_uint *pos, webvtt_uint length )
-{
-  return WEBVTT_PARSE_ERROR;
-}
-
 static webvtt_status
 webvtt_get_separator( webvtt_parser self, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint len )
