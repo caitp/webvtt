@@ -6,6 +6,8 @@
 
 #define _ERROR(X) do { if( skip_error == 0 ) { ERROR(X); } } while(0)
 
+#define FINISH_TOKEN self->token_pos = 0;
+
 static const webvtt_byte separator[] = {
   UTF8_HYPHEN_MINUS, UTF8_HYPHEN_MINUS, UTF8_GREATER_THAN
 };
@@ -221,9 +223,10 @@ WEBVTT_INTERN webvtt_status
 webvtt_skip_cue( webvtt_parser self, webvtt_state *st,
   const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
 {
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
   webvtt_token token = UNFINISHED;
   webvtt_state *up = FRAMEUP(1);
-  CALLBACK_DATA
 
   if( self->finish ) {
     if( up->type == V_TEXT ) {
@@ -391,10 +394,17 @@ webvtt_parse_header( webvtt_parser self, webvtt_state *st,
 {
   int v;
   webvtt_token token;
-  CALLBACK_SETUP
+  webvtt_uint last_line;
+  webvtt_uint last_column;
+  if( self->finish ) {
+    goto __final;
+  }
+
   while( *pos < len )
   {
-    CALLBACK_DATA
+__final:
+    last_line = self->line;
+    last_column = self->column;
     switch( st->flags )
     {
     case 0:
@@ -727,9 +737,17 @@ webvtt_parse_body( webvtt_parser self, webvtt_state *st, const webvtt_byte *text
   webvtt_uint *pos, webvtt_uint len )
 {
   webvtt_token token;
-  CALLBACK_SETUP
+  webvtt_uint last_line;
+  webvtt_uint last_column;
+
+  if( self->finish ) {
+    goto __final;
+  }
+
   while( *pos < len ) {
-    CALLBACK_DATA
+__final:
+    last_line = self->line;
+    last_column = self->column;
     token = webvtt_lex( self, text, pos, len, self->finish );
     switch( token ) {
     case NEWLINE:
