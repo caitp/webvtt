@@ -81,7 +81,8 @@ KNOWN_VALGRIND_TEST_FAILURES +=
 	cigeneral_unittest \
 	cilanguage_unittest \
 	cilineendings_unittest \
-	csposition_unittest
+	csposition_unittest \
+        filestructure_unittest
 endif
 
 # Tests we expect to fail (i.e., known-fails)
