@@ -34,7 +34,8 @@ static const char *errstr[] = {
 
 /**
  * TODO:
- * Add i18n localized error strings with support for glibc and msvcrt locale identifiers
+ * Add i18n localized error strings with support for glibc and msvcrt locale
+ * identifiers
  * (This might be too much work!)
  */
 WEBVTT_EXPORT const char *

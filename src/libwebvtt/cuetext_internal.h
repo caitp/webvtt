@@ -30,16 +30,21 @@ webvtt_cuetext_token_state_t {
   ESCAPE, /* Parsing an escape value. */
   TAG, /* Reached a '<' character, about to start parsing a tag. */
   START_TAG, /* Parsing the beginning of a tag i.e. the tag name. */
-  START_TAG_CLASS, /* Parsing a tag class. Reached when the tokenizer in the START_TAG
-                     state reaches a '.' character. */
-  START_TAG_ANNOTATION, /* Parsing a tag annotation. Reached when the tokenizer in the
-                        START_TAG_CLASS state reaches a TAB, SPACE, or FORM FEED character. */
-  END_TAG, /* Parsing an end tag. Reached when a '<' character is follwed by a '/' character. */
-  TIME_STAMP_TAG /* Parsing a time stamp tag. Reached when a '<' character is follwed by an integer character. */
+  START_TAG_CLASS, /* Parsing a tag class. Reached when the tokenizer in the
+                      START_TAG
+                      state reaches a '.' character. */
+  START_TAG_ANNOTATION, /* Parsing a tag annotation. Reached when the tokenizer
+                           in the START_TAG_CLASS state reaches a TAB, SPACE, or
+                           FORM FEED character. */
+  END_TAG, /* Parsing an end tag. Reached when a '<' character is follwed by a
+              '/' character. */
+  TIME_STAMP_TAG /* Parsing a time stamp tag. Reached when a '<' character is
+                    follwed by an integer character. */
 };
 
 /**
- * Contains a void pointer to a concrete token as well as a token type enum that identifies what kind of token it is.
+ * Contains a void pointer to a concrete token as well as a token type enum that
+ * identifies what kind of token it is.
  */
 struct
 webvtt_cuetext_token_t {
@@ -54,7 +59,8 @@ webvtt_cuetext_token_t {
 
 /**
  * Represents a start tag in the cue text.
- * These take the form of <[TAG_NAME].[CLASSES] [POSSIBLE_ANNOTATION]> in the cue text.
+ * These take the form of <[TAG_NAME].[CLASSES] [POSSIBLE_ANNOTATION]> in the
+ * cue text.
  */
 struct
 webvtt_cuetext_start_token_data_t {
@@ -96,7 +102,8 @@ WEBVTT_INTERN webvtt_status webvtt_get_node_kind_from_tag_name( webvtt_string *t
 WEBVTT_INTERN webvtt_status webvtt_create_node_from_token( webvtt_cuetext_token *token, webvtt_node **node, webvtt_node *parent );
 
 /**
- * Tokenizes the cue text into something that can be easily understood by the cue text parser.
+ * Tokenizes the cue text into something that can be easily understood by the
+ * cue text parser.
  * Referenced from - http://dev.w3.org/html5/webvtt/#webvtt-cue-text-tokenizer
  */
 WEBVTT_INTERN webvtt_status webvtt_cuetext_tokenizer( webvtt_byte **position, webvtt_cuetext_token **token );
@@ -136,7 +143,8 @@ WEBVTT_INTERN webvtt_status webvtt_cuetext_tokenizer_start_tag_class_state( webv
   webvtt_cuetext_token_state *token_state, webvtt_stringlist *css_classes );
 
 /**
- * Referenced from http://dev.w3.org/html5/webvtt/#webvtt-start-tag-annotation-state
+ * Referenced from 
+ * http://dev.w3.org/html5/webvtt/#webvtt-start-tag-annotation-state
  */
 WEBVTT_INTERN webvtt_status webvtt_cuetext_tokenizer_start_tag_annotation_state( webvtt_byte **position,
   webvtt_cuetext_token_state *token_state, webvtt_string *annotation );

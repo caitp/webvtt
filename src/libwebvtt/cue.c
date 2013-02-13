@@ -69,7 +69,8 @@ webvtt_validate_cue( webvtt_cue *cue )
 {
   if( cue ) {
     /**
-     * validate cue-times (Can't do checks against previously parsed cuetimes. That's the applications responsibility
+     * validate cue-times (Can't do checks against previously parsed cuetimes. 
+     * That's the applications responsibility
      */
     if( BAD_TIMESTAMP(cue->from) || BAD_TIMESTAMP(cue->until) ) {
       goto error;
@@ -80,7 +81,8 @@ webvtt_validate_cue( webvtt_cue *cue )
     }
 
     /**
-     * Don't do any payload validation, because this would involve parsing the payload, which is optional.
+     * Don't do any payload validation, because this would involve parsing the
+     * payload, which is optional.
      */
     return 1;
   }

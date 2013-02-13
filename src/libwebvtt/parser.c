@@ -807,11 +807,13 @@ webvtt_create_parser( webvtt_cue_fn on_read,
 }
 
 /**
- * Helper to validate a cue and, if valid, notify the application that a cue has been read.
+ * Helper to validate a cue and, if valid, notify the application that a cue has
+ * been read.
  * If it fails to validate, silently delete the cue.
  *
- * ( This might not be the best way to go about this, and additionally, webvtt_validate_cue
- *   has no means to report errors with the cue, and we do nothing with its return value )
+ * ( This might not be the best way to go about this, and additionally,
+ * webvtt_validate_cue has no means to report errors with the cue, and we do
+ * nothing with its return value )
  */
 static void
 finish_cue( webvtt_parser self, webvtt_cue **pcue )
@@ -1086,14 +1088,14 @@ else if( !have_ws ) \
   ERROR_AT_COLUMN(WEBVTT_EXPECTED_WHITESPACE,last_column);
 
         /**
-         * This section is "pre-cuesetting". We are expecting whitespace, followed by
-         * a cuesetting keyword
+         * This section is "pre-cuesetting". We are expecting whitespace,
+         * followed by a cuesetting keyword
          *
-         * If we don't see a keyword, but have our whitespace, it is considered a bad keyword
-         * (invalid cuesetting)
+         * If we don't see a keyword, but have our whitespace, it is considered
+         * a bad keyword (invalid cuesetting)
          *
-         * Otherwise, if we don't have whitespace and have a bad token, it's an invalid
-         * delimiter
+         * Otherwise, if we don't have whitespace and have a bad token, it's an
+         * invalid delimiter
          */
       case CP_CS0:
         switch( token ) {
@@ -1159,9 +1161,10 @@ else if( !have_ws ) \
 
         /**
          * If we get a COLON, we advance to the next state.
-         * If we encounter whitespace first, fire an "unexpected whitespace" error and continue.
-         * If we encounter a cue-setting value, fire a "missing cuesetting delimiter" error
-         * otherwise (eg vertical;rl), fire "invalid cuesetting delimiter" error
+         * If we encounter whitespace first, fire an "unexpected whitespace"
+         * error and continue. If we encounter a cue-setting value, fire a
+         * "missing cuesetting delimiter" error otherwise (eg vertical;rl), fire
+         * "invalid cuesetting delimiter" error
          *
          * this logic is performed by the CS1 macro, defined above
          */
@@ -1182,19 +1185,19 @@ else if( !have_ws ) \
         break;
 #undef CS1
 
-        /* BV: emit the BAD_VALUE error for the appropriate setting, when required */
+/* BV: emit the BAD_VALUE error for the appropriate setting, when required */
 #define BV(T) \
 ERROR_AT_COLUMN(WEBVTT_##T##_BAD_VALUE,last_column); \
 while( pos < len && buffer[pos] != 0x20 && buffer[pos] != 0x09 ) ++pos; \
 SETST(CP_CS0);
 
-        /* HV: emit the ALREADY_SET (have value) error for the appropriate setting, when required */
+/* HV: emit the ALREADY_SET (have value) error for the appropriate setting, when required */
 #define HV(T) \
 if( cue->flags & CUE_HAVE_##T ) \
 { \
   ERROR_AT_COLUMN(WEBVTT_##T##_ALREADY_SET,last_column); \
 }
-        /* WS: emit the WEBVTT_UNEXPECTED_WHITESPACE error when required. */
+/* WS: emit the WEBVTT_UNEXPECTED_WHITESPACE error when required. */
 #define WS \
 case WHITESPACE: \
   if( !have_ws ) \
@@ -1204,7 +1207,7 @@ case WHITESPACE: \
   } \
 break
 
-        /* set that the cue already has a value for this */
+/* set that the cue already has a value for this */
 #define SV(T) cue->flags |= CUE_HAVE_##T
       case CP_V2:
         HV( VERTICAL );
@@ -1489,7 +1492,10 @@ parse_timestamp( webvtt_parser self, const webvtt_byte *b, webvtt_timestamp *res
   /* get sequence of digits */
   v[0] = parse_int( &b, &digits );
 
-  /* assume v[0] contains hours if more or less than 2 digits, or value is greater than 59 */
+  /**
+   * assume v[0] contains hours if more or less than 2 digits, or value is
+   * greater than 59
+   */
   if ( digits != 2 || v[0] > 59 ) {
     have_hours = 1;
   }
@@ -1510,8 +1516,8 @@ parse_timestamp( webvtt_parser self, const webvtt_byte *b, webvtt_timestamp *res
     malformed = 1;
   }
 
-  /* if we already know there's an hour component, or if the next byte is a colon ':',
-     read the next value */
+  /* if we already know there's an hour component, or if the next byte is a 
+     colon ':', read the next value */
   if ( have_hours || ( *b == ASCII_COLON ) ) {
     if( *b++ != ASCII_COLON ) {
       goto _malformed;
@@ -1530,8 +1536,8 @@ parse_timestamp( webvtt_parser self, const webvtt_byte *b, webvtt_timestamp *res
     v[0] = 0;
   }
 
-  /* collect the manditory seconds-frac component. fail if there is no FULL_STOP '.'
-     or if there is no ascii digit following it */
+  /* collect the manditory seconds-frac component. fail if there is no FULL_STOP
+     '.' or if there is no ascii digit following it */
   if( *b++ != ASCII_PERIOD || !ASCII_ISDIGIT( *b ) ) {
     goto _malformed;
   }

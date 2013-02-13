@@ -30,16 +30,17 @@ WEBVTT_EXPORT void webvtt_init_string( webvtt_string *result );
  * webvtt_create_string
  *
  * allocate a new string object with an initial capacity of 'alloc'
- * (the string data of 'result' is not expected to contain string data, regardless of its value.
- * be sure to release existing strings before using webvtt_create_string)
+ * (the string data of 'result' is not expected to contain string data, 
+ * regardless of its value. be sure to release existing strings before using 
+ * webvtt_create_string)
  */
 WEBVTT_EXPORT webvtt_status webvtt_create_string( webvtt_uint32 alloc, webvtt_string *result );
 
 /**
  * webvtt_create_init_string
  *
- * allocate and initialize a string with the contents of 'init_text' of length 'len'
- * if 'len' < 0, assume init_text to be null-terminated.
+ * allocate and initialize a string with the contents of 'init_text' of length 
+ * 'len' if 'len' < 0, assume init_text to be null-terminated.
  */
 WEBVTT_EXPORT webvtt_status webvtt_create_string_with_text( webvtt_string *result, const webvtt_byte *init_text, int len );
 
@@ -102,7 +103,8 @@ WEBVTT_EXPORT const webvtt_uint32 webvtt_string_capacity( const webvtt_string *s
 /**
  * webvtt_string_getline
  *
- * collect a line of text (terminated by CR/LF/CRLF) from a buffer, without including the terminating character(s)
+ * collect a line of text (terminated by CR/LF/CRLF) from a buffer, without 
+ * including the terminating character(s)
  */
 WEBVTT_EXPORT int webvtt_string_getline( webvtt_string *str, const webvtt_byte *buffer,
     webvtt_uint *pos, webvtt_uint len, int *truncate, webvtt_bool finish, webvtt_bool retain_new_line );

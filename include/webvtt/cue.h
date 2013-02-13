@@ -46,7 +46,8 @@ webvtt_node_kind_t {
 } webvtt_node_kind;
 
 /**
-  * Macros to assist in validating node kinds, so that C++ compilers don't complain (as long as they provide reinterpret_cast, which they should)
+  * Macros to assist in validating node kinds, so that C++ compilers don't 
+  * complain (as long as they provide reinterpret_cast, which they should)
   */
 #if defined(__cplusplus) || defined(__cplusplus_cli) || defined(__embedded_cplusplus) || defined(c_plusplus)
 # define WEBVTT_CAST(Type,Val) (reinterpret_cast<Type>(Val))
@@ -90,8 +91,9 @@ webvtt_node_t {
 
   struct webvtt_refcount_t refs;
   /**
-    * The specification asks for uni directional linked list, but we have added a parent
-    * node in order to facilitate an iterative cue text parsing solution.
+    * The specification asks for uni directional linked list, but we have added 
+    * a parent node in order to facilitate an iterative cue text parsing 
+    * solution.
     */
   struct webvtt_node_t *parent;
   webvtt_node_kind kind;

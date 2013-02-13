@@ -10,7 +10,11 @@ static void *default_alloc( void *unused, webvtt_uint nb );
 static void default_free( void *unused, void *ptr );
 
 struct {
-  webvtt_uint n_alloc; /* Number of allocated objects. Forbid changing the allocator if this is not equal to 0 */
+  /**
+   * Number of allocated objects. Forbid changing the allocator if this is not 
+   * equal to 0 
+   */
+  webvtt_uint n_alloc; 
   webvtt_alloc_fn_ptr alloc;
   webvtt_free_fn_ptr free;
   void *alloc_data;
@@ -33,7 +37,8 @@ webvtt_set_allocator( webvtt_alloc_fn_ptr alloc, webvtt_free_fn_ptr free, void *
 {
   /**
    * TODO:
-   * This really needs a lock. But then, so does all the allocation/free functions...
+   * This really needs a lock. But then, so does all the allocation/free 
+   * functions...
    * that could be a problem.
    */
   if( allocator.n_alloc == 0 ) {

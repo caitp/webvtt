@@ -11,13 +11,19 @@ extern "C" {
   {
     /* There was a problem allocating something */
     WEBVTT_ALLOCATION_FAILED = 0,
-    /* 'WEBVTT' is not the first 6 characters in the file (not counting UTF8 BOM) */
+    /** 
+     * 'WEBVTT' is not the first 6 characters in the file 
+     * (not counting UTF8 BOM)
+     */
     WEBVTT_MALFORMED_TAG,
     /* An end-of-line sequence was expected, but not found. */
     WEBVTT_EXPECTED_EOL,
     /* A string of whitespace was expected, but not found. */
     WEBVTT_EXPECTED_WHITESPACE,
-    /* A string of whitespace was found, but was not expected (Recoverable error) */
+    /**
+     * A string of whitespace was found, but was not expected 
+     * (Recoverable error)
+     */
     WEBVTT_UNEXPECTED_WHITESPACE,
     /* Long WEBVTT comment, decide whether to abort parsing or not */
     WEBVTT_LONG_COMMENT,

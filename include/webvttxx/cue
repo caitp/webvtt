@@ -95,7 +95,8 @@ public:
 
   /**
    * Cue settings
-   * These helper functions allow applications to query for data about how to render the cue as a whole
+   * These helper functions allow applications to query for data about how to
+   * render the cue as a whole
    */
   inline bool snapToLines() const { return !!cue->snap_to_lines; }
 

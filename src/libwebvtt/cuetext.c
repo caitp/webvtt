@@ -24,7 +24,8 @@ do \
 
 /**
  * Macros for return statuses based on memory operations.
- * This is to avoid many if statements checking for multiple memory operation return statuses in functions.
+ * This is to avoid many if statements checking for multiple memory operation
+ * return statuses in functions.
  */
 #define CHECK_MEMORY_OP(status) \
   if( status != WEBVTT_SUCCESS ) \
@@ -306,7 +307,8 @@ webvtt_cuetext_tokenizer_escape_state( webvtt_byte **position,
   CHECK_MEMORY_OP_JUMP( status, webvtt_create_string( 1, &buffer ) );
 
   /**
-   * Append ampersand here because the algorithm is not able to add it to the buffer when it reads it in the DATA state tokenizer.
+   * Append ampersand here because the algorithm is not able to add it to the
+   * buffer when it reads it in the DATA state tokenizer.
    */
   CHECK_MEMORY_OP_JUMP( status, webvtt_string_putc( &buffer, UTF8_AMPERSAND ) );
 
@@ -321,8 +323,8 @@ webvtt_cuetext_tokenizer_escape_state( webvtt_byte **position,
     }
     /**
      * This means we have enocuntered a malformed escape character sequence.
-     * This means that we need to add that malformed text to the result and recreate the buffer
-     * to prepare for a new escape sequence.
+     * This means that we need to add that malformed text to the result and
+     * recreate the buffer to prepare for a new escape sequence.
      */
     else if( **position == UTF8_AMPERSAND ) {
       CHECK_MEMORY_OP_JUMP( status, webvtt_string_append_string( result, &buffer ) );
@@ -332,8 +334,8 @@ webvtt_cuetext_tokenizer_escape_state( webvtt_byte **position,
     }
     /**
      * We've encountered the semicolon which is the end of an escape sequence.
-     * Check if buffer contains a valid escape sequence and if it does append the
-     * interpretation to result and change the state to DATA.
+     * Check if buffer contains a valid escape sequence and if it does append
+     * the interpretation to result and change the state to DATA.
      */
     else if( **position == UTF8_SEMI_COLON ) {
       if( memcmp( webvtt_string_text(&buffer), amp_escape, min(webvtt_string_length(&buffer), AMP_ESCAPE_LENGTH ) ) == 0 ) {
@@ -356,14 +358,16 @@ webvtt_cuetext_tokenizer_escape_state( webvtt_byte **position,
       *token_state = DATA;
     }
     /**
-     * Character is alphanumeric. This means we are in the body of the escape sequence.
+     * Character is alphanumeric. This means we are in the body of the escape
+     * sequence.
      */
     else if( webvtt_isalphanum( **position ) ) {
       CHECK_MEMORY_OP_JUMP( status, webvtt_string_putc( &buffer, **position ) );
     }
     /**
      * If we have not found an alphanumeric character then we have encountered
-     * a malformed escape sequence. Add buffer to result and continue to parse in DATA state.
+     * a malformed escape sequence. Add buffer to result and continue to parse
+     * in DATA state.
      */
     else {
       CHECK_MEMORY_OP_JUMP( status, webvtt_string_append_string( result, &buffer ) );
@@ -542,8 +546,9 @@ webvtt_cuetext_tokenizer( webvtt_byte **position, webvtt_cuetext_token **token )
 
   /**
    * Loop while the tokenizer is not finished.
-   * Based on the state of the tokenizer enter a function to handle that particular tokenizer state.
-   * Those functions will loop until they either change the state of the tokenizer or reach a valid token end point.
+   * Based on the state of the tokenizer enter a function to handle that
+   * particular tokenizer state. Those functions will loop until they either
+   * change the state of the tokenizer or reach a valid token end point.
    */
   while( status == WEBVTT_UNFINISHED ) {
     switch( token_state ) {
@@ -582,9 +587,10 @@ webvtt_cuetext_tokenizer( webvtt_byte **position, webvtt_cuetext_token **token )
   { (*position)++; }
 
   /**
-   * If we have not recieved a webvtt success then that means we should not create a token and
-   * therefore we need to deallocate result, annotation, and css classes now because no token/node
-   * struct will take care of deallocation later in the parser.
+   * If we have not recieved a webvtt success then that means we should not
+   * create a token and therefore we need to deallocate result, annotation, and
+   * css classes now because no token/node struct will take care of deallocation
+   * later in the parser.
    */
   if( status != WEBVTT_SUCCESS ) {
     webvtt_release_string( &result );
@@ -594,7 +600,8 @@ webvtt_cuetext_tokenizer( webvtt_byte **position, webvtt_cuetext_token **token )
   }
 
   /**
-   * The state that the tokenizer left off on will tell us what kind of token needs to be made.
+   * The state that the tokenizer left off on will tell us what kind of token
+   * needs to be made.
    */
   if( token_state == DATA || token_state == ESCAPE ) {
     return webvtt_create_cuetext_text_token( &(*token), result );
@@ -617,7 +624,8 @@ webvtt_cuetext_tokenizer( webvtt_byte **position, webvtt_cuetext_token **token )
 
 /**
  * Currently line and len are not being kept track of.
- * Don't think pnode_length is needed as nodes track there list count internally.
+ * Don't think pnode_length is needed as nodes track there list count
+ * internally.
  */
 WEBVTT_INTERN webvtt_status
 webvtt_parse_cuetext( webvtt_parser self, webvtt_cue *cue, webvtt_string *payload, int finished )
@@ -653,7 +661,8 @@ webvtt_parse_cuetext( webvtt_parser self, webvtt_cue *cue, webvtt_string *payloa
   token = NULL;
 
   /**
-   * Routine taken from the W3C specification - http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
+   * Routine taken from the W3C specification
+   * http://dev.w3.org/html5/webvtt/#webvtt-cue-text-parsing-rules
    */
   while( *position != UTF8_NULL_BYTE ) {
 
@@ -668,27 +677,32 @@ webvtt_parse_cuetext( webvtt_parser self, webvtt_cue *cue, webvtt_string *payloa
       case( WEBVTT_SUCCESS ):
 
         /**
-         * If we've found an end token which has a valid end token tag name and a tag name
-         * that is equal to the current node then set current to the parent of current.
+         * If we've found an end token which has a valid end token tag name and
+         * a tag name that is equal to the current node then set current to the
+         * parent of current.
          */
         if( token->token_type == END_TOKEN ) {
           /**
-           * We have encountered an end token but we are at the top of the list and thus have not encountered any start tokens yet, throw away the token.
+           * We have encountered an end token but we are at the top of the list
+           * and thus have not encountered any start tokens yet, throw away the
+           * token.
            */
           if( current_node->kind == WEBVTT_HEAD_NODE ) {
             continue;
           }
 
           /**
-           * We have encountered an end token but it is not in a format that is supported, throw away the token.
+           * We have encountered an end token but it is not in a format that is
+           * supported, throw away the token.
            */
           if( webvtt_get_node_kind_from_tag_name( &token->tag_name, &kind ) == WEBVTT_INVALID_TAG_NAME ) {
             continue;
           }
 
           /**
-           * We have encountered an end token and it matches the start token of the node that we are currently on.
-           * Move back up the list of nodes and continue parsing.
+           * We have encountered an end token and it matches the start token of
+           * the node that we are currently on. Move back up the list of nodes
+           * and continue parsing.
            */
           if( current_node->kind == kind ) {
             current_node = current_node->parent;
@@ -697,8 +711,9 @@ webvtt_parse_cuetext( webvtt_parser self, webvtt_cue *cue, webvtt_string *payloa
 
           /**
            * Attempt to create a valid node from the token.
-           * If successful then attach the node to the current nodes list and also set current to the newly created node
-           * if it is an internal node type.
+           * If successful then attach the node to the current nodes list and
+           * also set current to the newly created node if it is an internal
+           * node type.
            */
           if( webvtt_create_node_from_token( token, &temp_node, current_node ) != WEBVTT_SUCCESS )
             /* Do something here? */

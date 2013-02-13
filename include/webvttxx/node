@@ -32,7 +32,12 @@ public:
   const InternalNode *toInternalNode() const;
   const TextNode *toTextNode() const;
   const TimeStampNode *toTimeStampNode() const;
-  virtual ~Node() { /* Don't need to free the webvtt_node here as it will be freed when it's parent cue is freed. */ }
+  virtual ~Node() { 
+  /**
+   * Don't need to free the webvtt_node here as it will be freed when it's
+   * parent cue is freed.
+   */
+  }
 protected:
   webvtt_node *node;
 };
