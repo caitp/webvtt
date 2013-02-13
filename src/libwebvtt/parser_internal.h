@@ -138,8 +138,23 @@ WEBVTT_INTERN webvtt_status webvtt_read_settings( webvtt_parser self,
 WEBVTT_INTERN webvtt_status webvtt_parse_settings( webvtt_parser self,
   webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
 
+WEBVTT_INTERN webvtt_status webvtt_parse_params( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_size( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+WEBVTT_INTERN webvtt_status webvtt_parse_align( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+WEBVTT_INTERN webvtt_status webvtt_parse_position( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+WEBVTT_INTERN webvtt_status webvtt_parse_vertical( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+WEBVTT_INTERN webvtt_status webvtt_parse_line( webvtt_parser self,
+  webvtt_cue *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
 WEBVTT_INTERN webvtt_status webvtt_parse_header( webvtt_parser self,
   webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint length );
+
 WEBVTT_INTERN webvtt_status webvtt_parse_body( webvtt_parser self,
   webvtt_state *st, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
 

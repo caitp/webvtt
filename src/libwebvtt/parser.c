@@ -312,6 +312,9 @@ webvtt_read_settings( webvtt_parser self, webvtt_state *st,
     webvtt_lex( self, text, pos, len, self->finish );
     FINISH_TOKEN
 
+    /* Need to rewind 'line' here */
+    --self->line;
+
     check_settings:
     if( webvtt_string_length( &st->v.text ) == 0 ) {
       ERROR( WEBVTT_CUE_INCOMPLETE );
@@ -382,6 +385,11 @@ webvtt_parse_settings( webvtt_parser self, webvtt_state *st,
     goto finish;
   }
 
+  if( WEBVTT_FAILED( status = webvtt_parse_params( self, cue, text,
+    &pos, len ) ) ) {
+    goto finish;
+  }
+
   /* Mark that we've read cue params */
   up->v.cue->flags |= CUE_HAVE_CUEPARAMS;
   
@@ -392,6 +400,298 @@ finish:
   POP();
   return status;
 }
+
+/**
+ * parse optional cue-parameters
+ */
+WEBVTT_INTERN webvtt_status
+webvtt_parse_params( webvtt_parser self, webvtt_cue *cue,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len ) {
+  enum {
+    PARAMS_LEADING_SPACE,
+    PARAMS_KEYWORD,
+  } mode = PARAMS_LEADING_SPACE;
+  webvtt_status status = WEBVTT_SUCCESS;
+  
+  if( !len && text ) {
+    len = strlen( text );
+  }
+
+  while( *pos < len && status == WEBVTT_SUCCESS ) {
+    if( mode == PARAMS_LEADING_SPACE ) {
+      webvtt_uint last_column = self->column;
+      webvtt_uint last_line = self->line;
+      webvtt_token tk = webvtt_lex( self, text, pos, len, 1 );
+      if( tk == NEWLINE ) {
+        FINISH_TOKEN
+        break;
+      }
+      else if( tk != WHITESPACE ) {
+        FINISH_TOKEN
+        ERROR_AT( WEBVTT_EXPECTED_WHITESPACE, last_column, last_line );
+        while( *pos < len 
+          && text[ *pos ] != 0x20 
+          && text[ *pos ] != 0x09 ) {
+          ++( *pos );
+        }
+      } else {
+        FINISH_TOKEN
+        mode = PARAMS_KEYWORD;
+      }
+    } else if( mode == PARAMS_KEYWORD ) {
+      if( ( ( status = webvtt_parse_size( self, cue, text, pos, len ) )
+          == WEBVTT_CONTINUE_LINE )
+        && ( ( status = webvtt_parse_align( self, cue, text, pos, len ) )
+          == WEBVTT_CONTINUE_LINE )
+        && ( ( status = webvtt_parse_line( self, cue, text, pos, len ) )
+          == WEBVTT_CONTINUE_LINE )
+        && ( ( status = webvtt_parse_position( self, cue, text, pos, len ) )
+          == WEBVTT_CONTINUE_LINE )
+        && ( ( status = webvtt_parse_vertical( self, cue, text, pos, len ) )
+          == WEBVTT_CONTINUE_LINE ) ) {
+        /* This should not occur */
+        return WEBVTT_NOT_SUPPORTED;
+      } else if( status == WEBVTT_CONTINUE_LINE ) {
+        continue;
+      } else if( status == WEBVTT_FINISH_LINE ) {
+        ++self->line;
+        return WEBVTT_SUCCESS;
+      } else if( status == WEBVTT_PARSE_ERROR ) {
+        return WEBVTT_PARSE_ERROR;
+      }
+    }
+  }
+
+  return status;
+}
+
+enum webvtt_param_mode
+{
+  P_KEYWORD,
+  P_COLON,
+  P_VALUE
+};
+
+typedef
+enum webvtt_token_flags_t
+{
+  POSITIVE = 0x80000000,
+  NEGATIVE = 0x40000000,
+  SIGN_MASK = ( POSITIVE | NEGATIVE ),
+  FLAGS_MASK = SIGN_MASK,
+  TOKEN_MASK = ( 0xFFFFFFFF & ~FLAGS_MASK ),
+} webvtt_token_flags;
+
+static webvtt_bool
+token_in_list( webvtt_token tk, const webvtt_token nt[] )
+{
+  int i = 0;
+  webvtt_token t;
+  while( ( t = nt[ i++ ] ) != 0 ) {
+    if( tk == t ) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int
+find_token( webvtt_token tk, const webvtt_token nt[] )
+{
+  int i = 0;
+  webvtt_token t;
+  while( ( t = nt[ i ] ) != 0 ) {
+    webvtt_token masked = t & TOKEN_MASK;
+    if( tk == masked ) {
+      return i;
+    }
+    ++i;
+  }
+  return -1;
+}
+
+static webvtt_status
+webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len, webvtt_error bv, webvtt_token
+  keyword, webvtt_token values[] ) {
+  int i;
+  webvtt_bool precws = 0;
+  webvtt_bool prevws = 0;
+  static const webvtt_token value_tokens[] = {
+    INTEGER, RL, LR, START, MIDDLE, END, LEFT, RIGHT, PERCENTAGE, 0
+  };
+  static const webvtt_token keyword_tokens[] = {
+    ALIGN, SIZE, LINE, POSITION, VERTICAL, 0
+  };
+  enum webvtt_param_mode mode = P_KEYWORD;
+  webvtt_uint keyword_column = 0;
+  while( *pos < len ) {
+    webvtt_uint last_line = self->line;
+    webvtt_uint last_column = self->column;
+    webvtt_uint last_pos = *pos;
+    webvtt_token tk = webvtt_lex( self, text, pos, len, 1 );
+    webvtt_uint tp = self->token_pos;
+    FINISH_TOKEN
+
+    switch( mode ) {
+      case P_KEYWORD:
+        switch( tk ) {
+          case ALIGN:
+          case SIZE:
+          case POSITION:
+          case VERTICAL:
+          case LINE:
+            if( tk != keyword ) {
+              *pos -= tp;
+              self->column -= tp;
+              return WEBVTT_CONTINUE_LINE;
+            }
+            mode = P_COLON;
+            keyword_column = last_column;
+            break;
+          case WHITESPACE:
+            break;
+          case NEWLINE:
+            return WEBVTT_FINISH_LINE;
+          case COLON:
+            ERROR_AT( WEBVTT_MISSING_CUESETTING_KEYWORD, last_line,
+              last_column );
+            *pos = *pos + 1;
+            self->column++;
+            while( *pos < len && text[ *pos ] != 0x20
+              && text[ *pos ] != 0x09 ) {
+              if( text[ *pos ] == 0x0A || text[ *pos ] == 0x0D ) {
+                return WEBVTT_FINISH_LINE;
+              }
+              ++( *pos );
+              ++self->column;
+            }
+          default:
+            ERROR_AT( WEBVTT_INVALID_CUESETTING, last_line,
+              last_column );
+            *pos = *pos + self->token_pos + 1;
+            self->column++;
+            break;
+        }
+        break;
+      case P_COLON:
+        if( tk == WHITESPACE && !precws ) {
+          ERROR_AT( WEBVTT_UNEXPECTED_WHITESPACE, last_line,
+            last_column
+          );
+          precws = 1;
+        }  else if( tk == COLON ) {
+          mode = P_VALUE;
+        } else if( token_in_list( tk, value_tokens ) ) {
+          ERROR_AT( WEBVTT_MISSING_CUESETTING_DELIMITER, last_line,
+            last_column ); 
+        } else if( token_in_list( tk, keyword_tokens ) ) {
+          ERROR_AT( WEBVTT_INVALID_CUESETTING, last_line,
+            keyword_column );
+        } else {
+          ERROR_AT( WEBVTT_INVALID_CUESETTING_DELIMITER, last_line,
+            last_column );
+          *pos = last_pos + tp + 1;
+        }
+        break;
+      case P_VALUE:
+        if( tk == WHITESPACE && !prevws ) {
+          ERROR_AT( WEBVTT_UNEXPECTED_WHITESPACE, last_line,
+            last_column );
+        } else if( ( i = find_token( tk, values ) ) >= 0 ) {
+          webvtt_token t = values[ i ] & TOKEN_MASK;
+          int flags = values[ i ] & FLAGS_MASK;
+          switch( t ) {
+            case INTEGER:
+            case PERCENTAGE:
+              if( ( flags & SIGN_MASK ) && 
+               ( ( self->token[ 0 ] == ASCII_DASH 
+                   && !( flags & NEGATIVE ) )
+                 || ( self->token[ 0 ] != ASCII_DASH 
+                   && !( flags & POSITIVE ) ) ) ) {
+                ERROR_AT( bv, last_line, last_column );
+              }
+          }
+          return i;
+        } else {
+          ERROR_AT( bv, last_line, last_column );
+        }
+        break;
+    }
+  }
+  return WEBVTT_CONTINUE_LINE;
+}
+
+
+WEBVTT_INTERN webvtt_status
+webvtt_parse_size( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+  webvtt_status v;
+  webvtt_token values[] = { PERCENTAGE|POSITIVE, 0 };
+  if( ( v = webvtt_parse_param( self, text, pos, len,
+    WEBVTT_SIZE_BAD_VALUE, SIZE, values ) ) >= 0 ) {
+    if( cue->flags & CUE_HAVE_SIZE ) {
+      ERROR_AT( WEBVTT_SIZE_ALREADY_SET, last_line, last_column );
+    }
+    cue->flags |= CUE_HAVE_SIZE;
+    if( values[ v ] ) {
+      int digits;
+      const webvtt_byte *t = self->token;
+      cue->settings.size = (webvtt_uint)parse_int( &t, &digits );
+      FINISH_TOKEN
+    }
+  }
+  return v; 
+}
+
+WEBVTT_INTERN webvtt_status
+webvtt_parse_align( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+  webvtt_status v;
+  webvtt_token values[] = { START, MIDDLE, END, LEFT, RIGHT, 0 };
+  if( ( v = webvtt_parse_param( self, text, pos, len,
+    WEBVTT_ALIGN_BAD_VALUE, ALIGN, values ) ) >= 0 ) {
+    if( cue->flags & CUE_HAVE_ALIGN ) {
+      ERROR_AT( WEBVTT_ALIGN_ALREADY_SET, last_line, last_column );
+    }
+    cue->flags |= CUE_HAVE_ALIGN;
+    switch( values[ v ] ) {
+      case START: cue->settings.align = WEBVTT_ALIGN_START; break;
+      case MIDDLE: cue->settings.align = WEBVTT_ALIGN_MIDDLE; break;
+      case END: cue->settings.align = WEBVTT_ALIGN_END; break;
+      case LEFT: cue->settings.align = WEBVTT_ALIGN_LEFT; break;
+      case RIGHT: cue->settings.align = WEBVTT_ALIGN_RIGHT; break;
+    }
+  }
+  return v >= 0 ? WEBVTT_SUCCESS : v;
+}
+
+WEBVTT_INTERN webvtt_status
+webvtt_parse_position( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+  return WEBVTT_SUCCESS;
+}
+
+WEBVTT_INTERN webvtt_status
+webvtt_parse_vertical( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+  return WEBVTT_SUCCESS;
+}
+
+WEBVTT_INTERN webvtt_status
+webvtt_parse_line( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
+  webvtt_uint *pos, webvtt_uint len )
+{
+}
+
 
 /**
  * Read a WEBVTT header
@@ -536,6 +836,7 @@ webvtt_parse_id( webvtt_parser self, webvtt_state *st, const webvtt_byte *text,
     /* skip EOL */
     webvtt_lex( self, text, pos, len, self->finish );
     FINISH_TOKEN
+    --self->line;
     if( find_bytes( webvtt_string_text( &st->v.text ), webvtt_string_length( &st->v.text ),
           separator, sizeof( separator ) ) ) {
       st->callback = webvtt_parse_settings;
