@@ -708,6 +708,9 @@ webvtt_parse_cuetext( webvtt_parser self, webvtt_cue *cue, webvtt_string *payloa
             if( WEBVTT_IS_VALID_INTERNAL_NODE( temp_node->kind ) )
             { current_node = temp_node; }
           }
+          if( temp_node ) {
+            webvtt_release_node( temp_node );
+          }
         }
         break;
     }

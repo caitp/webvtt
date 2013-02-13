@@ -17,13 +17,6 @@ WEBVTT_INTERN webvtt_status webvtt_create_time_stamp_leaf_node( webvtt_node **no
 WEBVTT_INTERN webvtt_status webvtt_create_text_leaf_node( webvtt_node **node, webvtt_node *parent, webvtt_string text );
 
 /**
- * Routines for deleting nodes.
- */
-WEBVTT_INTERN void webvtt_delete_node( webvtt_node *node );
-WEBVTT_INTERN void webvtt_delete_leaf_node( webvtt_node *leaf_node );
-WEBVTT_INTERN void webvtt_delete_internal_node( webvtt_node *internal_node );
-
-/**
  * Attaches a node to the internal node list of another node.
  */
 WEBVTT_INTERN webvtt_status webvtt_attach_internal_node( webvtt_node *current, webvtt_node *to_attach );

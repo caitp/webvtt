@@ -87,6 +87,8 @@ webvtt_align_type_t {
 
 typedef struct
 webvtt_node_t {
+
+  struct webvtt_refcount_t refs;
   /**
     * The specification asks for uni directional linked list, but we have added a parent
     * node in order to facilitate an iterative cue text parsing solution.
@@ -110,6 +112,9 @@ webvtt_internal_node_data_t {
   webvtt_uint length;
   webvtt_node **children;
 } webvtt_internal_node_data;
+
+WEBVTT_EXPORT void webvtt_ref_node( webvtt_node *node );
+WEBVTT_EXPORT void webvtt_release_node( webvtt_node *node );
 
 typedef struct
 webvtt_cue_settings_t {

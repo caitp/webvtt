@@ -58,7 +58,7 @@ webvtt_release_cue( webvtt_cue **pcue )
     *pcue = 0;
     if( webvtt_deref( &cue->refs ) == 0 ) {
       webvtt_release_string( &cue->id );
-      webvtt_delete_node( cue->node_head );
+      webvtt_release_node( cue->node_head );
       webvtt_free( cue );
     }
   }
@@ -89,6 +89,12 @@ error:
   return 0;
 }
 
+WEBVTT_EXPORT void
+webvtt_ref_node( webvtt_node *node )
+{
+  webvtt_ref( &node->refs );
+}
+
 WEBVTT_INTERN webvtt_status
 webvtt_create_node( webvtt_node **node, webvtt_node_kind kind, webvtt_node *parent )
 {
@@ -99,6 +105,7 @@ webvtt_create_node( webvtt_node **node, webvtt_node_kind kind, webvtt_node *pare
     return WEBVTT_OUT_OF_MEMORY;
   }
 
+  webvtt_ref_node( temp_node );
   temp_node->kind = kind;
   temp_node->parent = parent;
   *node = temp_node;
@@ -179,28 +186,34 @@ webvtt_create_text_leaf_node( webvtt_node **node, webvtt_node *parent, webvtt_st
 
 }
 
-WEBVTT_INTERN void
-webvtt_delete_node( webvtt_node *node )
+WEBVTT_EXPORT void 
+webvtt_release_node( webvtt_node *node )
 {
   webvtt_uint i;
 
-  if( node ) {
-    if( WEBVTT_IS_VALID_LEAF_NODE( node->kind ) ) {
-      if( node->data.text.d ) {
-        webvtt_release_string( &node->data.text );
-      }
-    } else if( WEBVTT_IS_VALID_INTERNAL_NODE( node->kind ) ) {
-      webvtt_delete_stringlist( &node->data.internal_data->css_classes );
-      if( node->data.internal_data->annotation.d ) {
-        webvtt_release_string( &node->data.internal_data->annotation );
-      }
-      for( i = 0; i < node->data.internal_data->length; i++ ) {
-        webvtt_delete_node( *(node->data.internal_data->children + i) );
-      }
-      webvtt_free( node->data.internal_data );
-    }
-    webvtt_free( node );
+  if( !node ) {
+    return;
   }
+
+  if( webvtt_deref( &node->refs ) > 0 ) {
+    return;
+  }
+
+  if( WEBVTT_IS_VALID_LEAF_NODE( node->kind ) ) {
+    if( node->data.text.d ) {
+      webvtt_release_string( &node->data.text );
+    }
+  } else if( WEBVTT_IS_VALID_INTERNAL_NODE( node->kind ) ) {
+    webvtt_delete_stringlist( &node->data.internal_data->css_classes );
+    if( node->data.internal_data->annotation.d ) {
+      webvtt_release_string( &node->data.internal_data->annotation );
+    }
+    for( i = 0; i < node->data.internal_data->length; i++ ) {
+      webvtt_release_node( *(node->data.internal_data->children + i) );
+    }
+    webvtt_free( node->data.internal_data );
+  }
+  webvtt_free( node );
 }
 
 WEBVTT_INTERN webvtt_status
@@ -229,6 +242,7 @@ webvtt_attach_internal_node( webvtt_node *current, webvtt_node *to_attach )
   }
 
   current->data.internal_data->children[current->data.internal_data->length++] = to_attach;
+  webvtt_ref_node( to_attach );
 
   return WEBVTT_SUCCESS;
 }

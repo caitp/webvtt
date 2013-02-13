@@ -50,6 +50,18 @@
 # define UTF8_Y               (0x79)
 # define UTF8_Z               (0x7A)
 
+/**
+ * Taken from ICU
+ * http://source.icu-project.org/repos/icu/icu/trunk/source/common/unicode/utf.h
+ */
+# define UTF_IS_NONCHAR( C ) \
+  ( ( C )>=0xFDD0 && \
+  ( ( webvtt_uint32 )( C ) <= 0xfdef || ( ( C ) & 0xFFFE)==0xFFFE) && \
+    ( webvtt_uint32 )( C ) <= 0x10FFFF )
+
+# define UTF_HIGH_SURROGATE( C ) ( webvtt_uint16 )( ( ( C ) >> 10 ) + 0xD7C0 )
+# define UTF_LOW_SURROGATE( C ) ( webvtt_uint16 )( ( ( C ) & 0x3FF ) | 0xDC00 )
+
 # ifndef WEBVTT_MAX_LINE
 #   define WEBVTT_MAX_LINE 0x10000
 # endif

@@ -161,6 +161,56 @@ WEBVTT_EXPORT void webvtt_delete_stringlist( webvtt_stringlist **list );
  */
 WEBVTT_EXPORT webvtt_status webvtt_stringlist_push( webvtt_stringlist *list, webvtt_string *str );
 
+/**
+ * Helper functions
+ */
+
+/**
+ * webvtt_next_utf8
+ *
+ * move the 'begin' pointer to the beginning of the next utf8 character
+ * sequence.
+ */
+WEBVTT_EXPORT webvtt_bool webvtt_next_utf8( const webvtt_byte **begin,
+  const webvtt_byte *end );
+
+/**
+ * webvtt_skip_utf8
+ *
+ * move the 'begin' pointer to the beginning of the utf8 character
+ * 'n_chars' away.
+ *
+ * if 'end' is less than 'begin', will seek backwards.
+ */
+WEBVTT_EXPORT webvtt_bool webvtt_skip_utf8( const webvtt_byte **begin,
+  const webvtt_byte *end, int n_chars );
+
+/**
+ * webvtt_utf8_to_utf16
+ *
+ * return the utf16 value of a given character
+ */
+WEBVTT_EXPORT webvtt_uint16 webvtt_utf8_to_utf16( const webvtt_byte *utf8,
+  const webvtt_byte *end, webvtt_uint16 *high_surrogate );
+
+/**
+ * webvtt_utf8_chcount
+ *
+ * return the number of Unicode characters (as opposed to units) 
+ * in a utf8 string
+ */
+WEBVTT_EXPORT int webvtt_utf8_chcount( const webvtt_byte *utf8,
+  const webvtt_byte *end );
+
+/**
+ * webvtt_utf8_length
+ *
+ * if 'utf8' points to a lead byte, return the length of the sequence.
+ * if 'utf8' is null, return 0.
+ * if 'utf8' points to a trail byte, return -1
+ */
+WEBVTT_EXPORT int webvtt_utf8_length( const webvtt_byte *utf8 );
+
 #if defined(__cplusplus) || defined(c_plusplus)
 }
 #endif

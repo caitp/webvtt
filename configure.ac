@@ -85,7 +85,7 @@ if [ test "x${ac_enable_valgrind}" = xyes ]; then
   AC_PATH_PROG(VALGRIND, [valgrind], no)
   if [ test "x${VALGRIND}" != xno ]; then
     VALGRIND_ENVIRONMENT="valgrind -q --leak-check=full --track-origins=yes --num-callers=50 --error-exitcode=1"
-    if [ test -n $OSX ]; then
+    if [ test "x$osx" = xtrue ]; then
       # On OS X we have to pass --dsymutil in order to get line numbers.
       VALGRIND_ENVIRONMENT="$VALGRIND_ENVIRONMENT --dsymutil=yes"
     else

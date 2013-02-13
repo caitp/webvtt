@@ -27,8 +27,11 @@ LIBS = \
 
 LDADD = $(LIBS)
 
+INTERNAL_TESTS = \
+  string_unittest
+
 FILESTRUCTURE_TESTS = \
-	filestructure_unittest
+  filestructure_unittest
 
 CUESETTINGS_TESTS = \
   csgeneric_unittest \
@@ -61,6 +64,7 @@ PAYLOAD_TESTS = \
   plrubytag_unittest
 
 UNIT_TESTS = \
+  $(INTERNAL_TESTS) \
   $(FILESTRUCTURE_TESTS) \
   $(CUESETTINGS_TESTS) \
   $(CUETIMES_TESTS) \
@@ -76,7 +80,7 @@ UNIT_TESTS = \
 #   make && make check
 KNOWN_VALGRIND_TEST_FAILURES =
 if VALGRIND_TESTING
-KNOWN_VALGRIND_TEST_FAILURES +=
+KNOWN_VALGRIND_TEST_FAILURES += \
 	ciarrow_unittest \
 	cigeneral_unittest \
 	cilanguage_unittest \
@@ -120,6 +124,9 @@ noinst_PROGRAMS = $(UNIT_TESTS)
 # gtest fragments
 EXTRA_DIST += cue_testfixture payload_testfixture test_parser
 
+# Utility unit tests
+string_unittest_SOURCES = string_unittest.cpp
+
 filestructure_unittest_SOURCES = filestructure_unittest.cpp
 # Cue Settings tests
 csgeneric_unittest_SOURCES = csgeneric_unittest.cpp
@@ -139,7 +146,7 @@ cigeneral_unittest_SOURCES = cigeneral_unittest.cpp
 cilanguage_unittest_SOURCES = cilanguage_unittest.cpp
 cilineendings_unittest_SOURCES = cilineendings_unittest.cpp
 
-#Payload Tests
+# Payload Tests
 plboldtag_unittest_SOURCES = plboldtag_unittest.cpp
 plclasstag_unittest_SOURCES = plclasstag_unittest.cpp
 plescapecharacter_unittest_SOURCES = plescapecharacter_unittest.cpp
