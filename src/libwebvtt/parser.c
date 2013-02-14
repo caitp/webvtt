@@ -448,9 +448,6 @@ webvtt_parse_params( webvtt_parser self, webvtt_cue *cue,
         /* 'p' */ case 0x70: func = &webvtt_parse_position; break;
         /* 's' */ case 0x73: func = &webvtt_parse_size; break;
         /* 'v' */ case 0x76: func = &webvtt_parse_vertical; break;
-        /* ':' */ case 0x3A:
-          ERROR( WEBVTT_MISSING_CUESETTING_KEYWORD );
-          goto skip_setting;
         default:
           ERROR( WEBVTT_INVALID_CUESETTING );
 skip_setting:
@@ -564,9 +561,13 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
               self->column -= tp;
               return WEBVTT_CONTINUE_LINE;
             }
-            if( *pos < len && webvtt_isalphanum( text[ *pos ] ) ) {
-              ERROR_AT_COLUMN( WEBVTT_INVALID_CUESETTING, last_column );
-              goto skip_param;
+            if( *pos < len ) {
+              webvtt_byte ch = text[ *pos ];
+              if( ch != 0x3A && ch != 0x20 && ch != 0x09 && ch != 0x0A
+                && ch != 0x0D ) {
+                ERROR_AT_COLUMN( WEBVTT_INVALID_CUESETTING, last_column );
+                goto skip_param;
+              }
             }
             mode = P_COLON;
             keyword_column = last_column;
@@ -575,12 +576,12 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
             break;
           case NEWLINE:
             return WEBVTT_FINISH_LINE;
-          case COLON:
-            ERROR_AT( WEBVTT_MISSING_CUESETTING_KEYWORD, last_line,
+            break;
+          default:
+            ERROR_AT( WEBVTT_INVALID_CUESETTING, last_line,
               last_column );
-            *pos = *pos + 1;
-            self->column++;
-skip_param:
+            *pos = *pos + tp + 1;
+ skip_param:
             while( *pos < len && text[ *pos ] != 0x20
               && text[ *pos ] != 0x09 ) {
               if( text[ *pos ] == 0x0A || text[ *pos ] == 0x0D ) {
@@ -590,12 +591,6 @@ skip_param:
               ++self->column;
             }
             break;
-          default:
-            ERROR_AT( WEBVTT_INVALID_CUESETTING, last_line,
-              last_column );
-            *pos = *pos + self->token_pos + 1;
-            self->column++;
-            goto skip_param;
         }
         break;
       case P_COLON:
@@ -608,7 +603,9 @@ skip_param:
           mode = P_VALUE;
         } else if( token_in_list( tk, value_tokens ) ) {
           ERROR_AT( WEBVTT_MISSING_CUESETTING_DELIMITER, last_line,
-            last_column ); 
+            last_column );
+          mode = P_VALUE;
+          goto get_value;
         } else if( token_in_list( tk, keyword_tokens ) ) {
           ERROR_AT( WEBVTT_INVALID_CUESETTING, last_line,
             keyword_column );
@@ -619,6 +616,7 @@ skip_param:
         }
         break;
       case P_VALUE:
+get_value:
         if( tk == WHITESPACE && !prevws ) {
           ERROR_AT( WEBVTT_UNEXPECTED_WHITESPACE, last_line,
             last_column );
@@ -626,6 +624,13 @@ skip_param:
           webvtt_token t = values[ i ] & TOKEN_MASK;
           int flags = values[ i ] & FLAGS_MASK;
           *value_column = last_column;
+          if( *pos < len ) {
+            webvtt_byte ch = text[ *pos ];
+            if( ch != 0x20 && ch != 0x09 
+              && ch != 0x0D && ch != 0x0A ) {
+              goto bad_value;
+            }
+          }
           switch( t ) {
             case INTEGER:
             case PERCENTAGE:
@@ -725,21 +730,117 @@ WEBVTT_INTERN webvtt_status
 webvtt_parse_position( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint len )
 {
-  return WEBVTT_CONTINUE_LINE;
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+  webvtt_status v;
+  webvtt_uint vc;
+  webvtt_bool first_flag = 0;
+  webvtt_token values[] = { PERCENTAGE|POSITIVE, 0 };
+  if( ( v = webvtt_parse_param( self, text, pos, len,
+    WEBVTT_POSITION_BAD_VALUE, POSITION, values, &vc ) ) >= 0 ) {
+    webvtt_uint digits;
+    webvtt_int64 value; 
+    const webvtt_byte *t = self->token; 
+    if( cue->flags & CUE_HAVE_POSITION ) {
+      ERROR_AT( WEBVTT_POSITION_ALREADY_SET, last_line, last_column );
+    } else {
+      first_flag = 1;
+    }
+    cue->flags |= CUE_HAVE_POSITION;
+    value = parse_int( &t, &digits );
+    switch( values[ v ] & TOKEN_MASK ) {
+      case INTEGER: {
+        cue->snap_to_lines = 1;
+        cue->settings.line.no = (int)value;
+      }
+      break;
+
+      case PERCENTAGE: {
+        if( value < 0 || value > 100 ) {
+          if( first_flag ) {
+            cue->flags &= ~CUE_HAVE_POSITION;
+          }
+          ERROR_AT_COLUMN( WEBVTT_POSITION_BAD_VALUE, vc );
+          return WEBVTT_SUCCESS;
+        }
+        cue->settings.position = (webvtt_uint)value;
+      } break;
+    }
+  }
+  return v >= 0 ? WEBVTT_SUCCESS : v;
 }
 
 WEBVTT_INTERN webvtt_status
 webvtt_parse_vertical( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint len )
 {
-  return WEBVTT_CONTINUE_LINE;
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+  webvtt_status v;
+  webvtt_uint vc;
+  webvtt_bool first_flag = 0;
+  webvtt_token values[] = { RL, LR, 0 };
+  if( ( v = webvtt_parse_param( self, text, pos, len,
+    WEBVTT_VERTICAL_BAD_VALUE, VERTICAL, values, &vc ) ) >= 0 ) {
+    webvtt_token t = values[ v ]; 
+    if( cue->flags & CUE_HAVE_VERTICAL ) {
+      ERROR_AT( WEBVTT_VERTICAL_ALREADY_SET, last_line, last_column );
+    } else {
+      first_flag = 1;
+    }
+    cue->flags |= CUE_HAVE_VERTICAL;
+    cue->settings.vertical = ( t == LR )
+                           ? WEBVTT_VERTICAL_LR
+                           : WEBVTT_VERTICAL_RL
+                           ;
+  }
+
+  return v >= 0 ? WEBVTT_SUCCESS : v;
 }
 
 WEBVTT_INTERN webvtt_status
 webvtt_parse_line( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
   webvtt_uint *pos, webvtt_uint len )
 {
-  return WEBVTT_CONTINUE_LINE;
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+  webvtt_status v;
+  webvtt_uint vc;
+  webvtt_bool first_flag = 0;
+  webvtt_token values[] = { INTEGER, PERCENTAGE|POSITIVE, 0 };
+  if( ( v = webvtt_parse_param( self, text, pos, len,
+    WEBVTT_LINE_BAD_VALUE, LINE, values, &vc ) ) >= 0 ) {
+    webvtt_uint digits;
+    webvtt_int64 value; 
+    const webvtt_byte *t = self->token; 
+    if( cue->flags & CUE_HAVE_LINE ) {
+      ERROR_AT( WEBVTT_LINE_ALREADY_SET, last_line, last_column );
+    } else {
+      first_flag = 1;
+    }
+    cue->flags |= CUE_HAVE_LINE;
+    value = parse_int( &t, &digits );
+    switch( values[ v ] & TOKEN_MASK ) {
+      case INTEGER: {
+        cue->snap_to_lines = 1;
+        cue->settings.line.no = (int)value;
+      }
+      break;
+
+      case PERCENTAGE: {
+        if( value < 0 || value > 100 ) {
+          if( first_flag ) {
+            cue->flags &= ~CUE_HAVE_LINE;
+          }
+          ERROR_AT_COLUMN( WEBVTT_LINE_BAD_VALUE, vc );
+          return WEBVTT_SUCCESS;
+        }
+        cue->snap_to_lines = 0;
+        cue->settings.line.relative_position = (webvtt_uint)value;
+      } break;
+    }
+  }
+  return v >= 0 ? WEBVTT_SUCCESS : v;
 }
 
 
@@ -1307,451 +1408,6 @@ find_bytes( const webvtt_byte *buffer, webvtt_uint len, const webvtt_byte *sbyte
       return 1;
     }
   } while( len-- >= slen && *buffer++ );
-  return 0;
-}
-
-WEBVTT_INTERN int
-parse_cueparams( webvtt_parser self, const webvtt_byte *buffer,
-                 webvtt_uint len, webvtt_cue *cue )
-{
-  int digits;
-  int have_ws = 0;
-  int unexpected_whitespace = 0;
-  webvtt_uint baddelim = 0;
-  webvtt_uint pos = 0;
-  webvtt_token last_token = 0;
-  enum cp_state {
-    CP_T1, CP_T2, CP_T3, CP_T4, CP_T5, /* 'start' cuetime, whitespace1,
-                   'separator', whitespace2, 'end' cuetime */
-    CP_CS0, /* pre-cuesetting */
-
-    CP_SD, /* cuesettings delimiter here */
-
-    CP_V1, /* 'vertical' cuesetting */
-    CP_P1, /* 'position' cuesetting */
-    CP_A1, /* 'align' cuesetting */
-    CP_S1, /* 'size' cuesetting */
-    CP_L1, /* 'line' cuesetting */
-
-    CP_SV, /* cuesettings value here */
-
-    CP_V2,
-    CP_P2,
-    CP_A2,
-    CP_S2,
-    CP_L2,
-  };
-
-  enum cp_state last_state = CP_T1;
-  enum cp_state state = CP_T1;
-
-#define SETST(X) do { baddelim = 0; last_state = state; state = (X); } while( 0 )
-
-  self->token_pos = 0;
-  while( pos < len ) {
-    webvtt_uint last_column = self->column;
-    webvtt_token token = webvtt_lex( self, buffer, &pos, len, 1 );
-_recheck:
-    switch( state ) {
-        /* start timestamp */
-      case CP_T1:
-        if( token == WHITESPACE && !unexpected_whitespace ) {
-          ERROR_AT_COLUMN( WEBVTT_UNEXPECTED_WHITESPACE, self->column );
-          unexpected_whitespace = 1;
-        } else if( token == TIMESTAMP )
-          if( !parse_timestamp( self, self->token, &cue->from ) ) {
-            ERROR_AT_COLUMN(
-              ( BAD_TIMESTAMP( cue->from )
-                ? WEBVTT_EXPECTED_TIMESTAMP
-                : WEBVTT_MALFORMED_TIMESTAMP ), last_column  );
-            if( !ASCII_ISDIGIT( self->token[self->token_pos - 1] ) ) {
-              while( pos < len && buffer[pos] != 0x09 && buffer[pos] != 0x20 ) { ++pos; }
-            }
-            if( BAD_TIMESTAMP( cue->from ) )
-            { return -1; }
-            SETST( CP_T2 );
-          } else {
-            SETST( CP_T2 );
-          }
-        else {
-          ERROR_AT_COLUMN( WEBVTT_EXPECTED_TIMESTAMP, last_column );
-          return -1;
-        }
-        break;
-        /* end timestamp */
-      case CP_T5:
-        if( token == WHITESPACE ) {
-          /* no problem, just ignore it and continue */
-        } else if( token == TIMESTAMP )
-          if( !parse_timestamp( self, self->token, &cue->until ) ) {
-            ERROR_AT_COLUMN(
-              ( BAD_TIMESTAMP( cue->until )
-                ? WEBVTT_EXPECTED_TIMESTAMP
-                : WEBVTT_MALFORMED_TIMESTAMP ), last_column  );
-            if( !ASCII_ISDIGIT( self->token[self->token_pos - 1] ) ) {
-              while( pos < len && buffer[pos] != 0x09 && buffer[pos] != 0x20 ) { ++pos; }
-            }
-            if( BAD_TIMESTAMP( cue->until ) )
-            { return -1; }
-            SETST( CP_CS0 );
-          } else {
-            SETST( CP_CS0 );
-          }
-        else {
-          ERROR_AT_COLUMN( WEBVTT_EXPECTED_TIMESTAMP, last_column );
-          return -1;
-        }
-        break;
-
-        /* whitespace 1 */
-      case CP_T2:
-        switch( token ) {
-          case SEPARATOR:
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
-            SETST( CP_T4 );
-            break;
-          case WHITESPACE:
-            SETST( CP_T3 );
-            break;
-        }
-        break;
-      case CP_T3:
-        switch( token ) {
-          case WHITESPACE: /* ignore this whitespace */
-            break;
-
-          case SEPARATOR:
-            SETST( CP_T4 );
-            break;
-
-          case TIMESTAMP:
-            ERROR( WEBVTT_MISSING_CUETIME_SEPARATOR );
-            SETST( CP_T5 );
-            goto _recheck;
-
-          default: /* some garbage */
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_CUETIME_SEPARATOR, last_column );
-            return -1;
-        }
-        break;
-      case CP_T4:
-        switch( token ) {
-          case WHITESPACE:
-            SETST( CP_T5 );
-            break;
-          case TIMESTAMP:
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
-            goto _recheck;
-          default:
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
-            goto _recheck;
-        }
-        break;
-#define CHKDELIM \
-if( baddelim ) \
-  ERROR_AT_COLUMN(WEBVTT_INVALID_CUESETTING_DELIMITER,baddelim); \
-else if( !have_ws ) \
-  ERROR_AT_COLUMN(WEBVTT_EXPECTED_WHITESPACE,last_column);
-
-        /**
-         * This section is "pre-cuesetting". We are expecting whitespace,
-         * followed by a cuesetting keyword
-         *
-         * If we don't see a keyword, but have our whitespace, it is considered
-         * a bad keyword (invalid cuesetting)
-         *
-         * Otherwise, if we don't have whitespace and have a bad token, it's an
-         * invalid delimiter
-         */
-      case CP_CS0:
-        switch( token ) {
-          case WHITESPACE:
-            have_ws = last_column;
-            break;
-          case COLON:
-            ERROR_AT_COLUMN( WEBVTT_MISSING_CUESETTING_KEYWORD, last_column );
-            break;
-          case VERTICAL:
-            CHKDELIM have_ws = 0;
-            SETST( CP_V1 );
-            break;
-          case POSITION:
-            CHKDELIM have_ws = 0;
-            SETST( CP_P1 );
-            break;
-          case ALIGN:
-            CHKDELIM have_ws = 0;
-            SETST( CP_A1 );
-            break;
-          case SIZE:
-            CHKDELIM have_ws = 0;
-            SETST( CP_S1 );
-            break;
-          case LINE:
-            CHKDELIM have_ws = 0;
-            SETST( CP_L1 );
-            break;
-          default:
-            if( have_ws ) {
-              ERROR_AT_COLUMN( WEBVTT_INVALID_CUESETTING, last_column );
-              while( pos < len && buffer[pos] != 0x09 && buffer[pos] != 0x20 ) { ++pos; }
-            } else if( token == BADTOKEN ) {
-              /* it was a bad delimiter... */
-              if( !baddelim ) {
-                baddelim = last_column;
-              }
-              ++pos;
-            }
-        }
-        break;
-#define CS1(S) \
-  if( token == COLON ) \
-  { if(have_ws) { ERROR_AT_COLUMN(WEBVTT_UNEXPECTED_WHITESPACE,have_ws); } SETST((S)); have_ws = 0; } \
-  else if( token == WHITESPACE && !have_ws ) \
-  { \
-    have_ws = last_column; \
-  } \
-  else \
-  { \
-    switch(token) \
-    { \
-    case LR: case RL: case INTEGER: case PERCENTAGE: case START: case MIDDLE: case END: case LEFT: case RIGHT: \
-       ERROR_AT_COLUMN(WEBVTT_MISSING_CUESETTING_DELIMITER,have_ws ? have_ws : last_column); break; \
-    default: \
-      ERROR_AT_COLUMN(WEBVTT_INVALID_CUESETTING_DELIMITER,last_column); \
-      while( pos < len && buffer[pos] != 0x20 && buffer[pos] != 0x09 ) ++pos; \
-      break; \
-    } \
-    have_ws = 0; \
-  }
-
-        /**
-         * If we get a COLON, we advance to the next state.
-         * If we encounter whitespace first, fire an "unexpected whitespace"
-         * error and continue. If we encounter a cue-setting value, fire a
-         * "missing cuesetting delimiter" error otherwise (eg vertical;rl), fire
-         * "invalid cuesetting delimiter" error
-         *
-         * this logic is performed by the CS1 macro, defined above
-         */
-      case CP_V1:
-        CS1( CP_V2 );
-        break;
-      case CP_P1:
-        CS1( CP_P2 );
-        break;
-      case CP_A1:
-        CS1( CP_A2 );
-        break;
-      case CP_S1:
-        CS1( CP_S2 );
-        break;
-      case CP_L1:
-        CS1( CP_L2 );
-        break;
-#undef CS1
-
-/* BV: emit the BAD_VALUE error for the appropriate setting, when required */
-#define BV(T) \
-ERROR_AT_COLUMN(WEBVTT_##T##_BAD_VALUE,last_column); \
-while( pos < len && buffer[pos] != 0x20 && buffer[pos] != 0x09 ) ++pos; \
-SETST(CP_CS0);
-
-/* HV: emit the ALREADY_SET (have value) error for the appropriate setting, when required */
-#define HV(T) \
-if( cue->flags & CUE_HAVE_##T ) \
-{ \
-  ERROR_AT_COLUMN(WEBVTT_##T##_ALREADY_SET,last_column); \
-}
-/* WS: emit the WEBVTT_UNEXPECTED_WHITESPACE error when required. */
-#define WS \
-case WHITESPACE: \
-  if( !have_ws ) \
-  { \
-    ERROR_AT_COLUMN(WEBVTT_UNEXPECTED_WHITESPACE,last_column); \
-    have_ws = last_column; \
-  } \
-break
-
-/* set that the cue already has a value for this */
-#define SV(T) cue->flags |= CUE_HAVE_##T
-      case CP_V2:
-        HV( VERTICAL );
-        switch( token ) {
-            WS;
-          case LR:
-            cue->settings.vertical = WEBVTT_VERTICAL_LR;
-            have_ws = 0;
-            SETST( CP_CS0 );
-            SV( VERTICAL );
-            break;
-          case RL:
-            cue->settings.vertical = WEBVTT_VERTICAL_RL;
-            have_ws = 0;
-            SETST( CP_CS0 );
-            SV( VERTICAL );
-            break;
-          default:
-            BV( VERTICAL );
-        }
-        break;
-
-      case CP_P2:
-        HV( POSITION );
-        switch( token ) {
-            WS;
-          case PERCENTAGE: {
-            int digits;
-            const webvtt_byte *t = self->token;
-            webvtt_int64 v = parse_int( &t, &digits );
-            if( v < 0 ) {
-              BV( POSITION );
-            }
-            cue->settings.position = ( webvtt_uint )v;
-            SETST( CP_CS0 );
-            SV( POSITION );
-          }
-          break;
-          default:
-            BV( POSITION );
-            break;
-        }
-        break;
-
-      case CP_A2:
-        HV( ALIGN );
-        switch( token ) {
-            WS;
-          case START:
-            cue->settings.align = WEBVTT_ALIGN_START;
-            have_ws = 0;
-            SETST( CP_CS0 );
-            SV( ALIGN );
-            break;
-          case MIDDLE:
-            cue->settings.align = WEBVTT_ALIGN_MIDDLE;
-            have_ws = 0;
-            SETST( CP_CS0 );
-            SV( ALIGN );
-            break;
-          case END:
-            cue->settings.align = WEBVTT_ALIGN_END;
-            have_ws = 0;
-            SETST( CP_CS0 );
-            SV( ALIGN );
-            break;
-          case LEFT:
-            cue->settings.align = WEBVTT_ALIGN_LEFT;
-            have_ws = 0;
-            SETST( CP_CS0 );
-            SV( ALIGN );
-            break;
-          case RIGHT:
-            cue->settings.align = WEBVTT_ALIGN_RIGHT;
-            have_ws = 0;
-            SETST( CP_CS0 );
-            SV( ALIGN );
-            break;
-          default:
-            BV( ALIGN );
-            break;
-        }
-        break;
-
-      case CP_S2:
-        HV( SIZE );
-        switch( token ) {
-            WS;
-          case PERCENTAGE: {
-            int digits;
-            const webvtt_byte *t = self->token;
-            webvtt_int64 v = parse_int( &t, &digits );
-            if( v < 0 ) {
-              BV( SIZE );
-            }
-            cue->settings.size = ( webvtt_uint )v;
-            SETST( CP_CS0 );
-            SV( SIZE );
-          }
-          break;
-          default:
-            BV( SIZE );
-            break;
-        }
-        break;
-
-      case CP_L2:
-        HV( LINE );
-        switch( token ) {
-            WS;
-          case INTEGER: {
-            const webvtt_byte *t = self->token;
-            webvtt_int64 v = parse_int( &t, &digits );
-            cue->settings.line_is_relative = 0;
-            cue->settings.line.no = ( webvtt_int )v;
-            SETST( CP_CS0 );
-            SV( LINE );
-          }
-          break;
-          case PERCENTAGE: {
-            const webvtt_byte *t = self->token;
-            webvtt_int64 v = parse_int( &t, &digits );
-            if( v < 0 ) {
-              BV( POSITION );
-            }
-            cue->settings.line.relative_position = ( webvtt_uint )v;
-            SETST( CP_CS0 );
-            SV( LINE );
-          }
-          break;
-          default:
-            BV( LINE );
-            break;
-        }
-#undef BV
-#undef HV
-#undef SV
-#undef WS
-    }
-    self->token_pos = 0;
-    last_token = token;
-  }
-  /**
-   * If we didn't finish in a good state...
-   */
-  if( state != CP_CS0 ) {
-    /* if we never made it to the cuesettings, we didn't finish the cuetimes */
-    if( state < CP_CS0 ) {
-      ERROR( WEBVTT_UNFINISHED_CUETIMES );
-      return -1;
-    } else {
-      /* if we did, we should report an error but continue parsing. */
-      webvtt_error e = WEBVTT_INVALID_CUESETTING;
-      switch( state ) {
-        case CP_V2:
-          e = WEBVTT_VERTICAL_BAD_VALUE;
-          break;
-        case CP_P2:
-          e = WEBVTT_POSITION_BAD_VALUE;
-          break;
-        case CP_A2:
-          e = WEBVTT_ALIGN_BAD_VALUE;
-          break;
-        case CP_S2:
-          e = WEBVTT_SIZE_BAD_VALUE;
-          break;
-        case CP_L2:
-          e = WEBVTT_LINE_BAD_VALUE;
-          break;
-      }
-      ERROR( e );
-    }
-  } else {
-    if( baddelim ) {
-      ERROR_AT_COLUMN( WEBVTT_INVALID_CUESETTING_DELIMITER, baddelim );
-    }
-  }
-#undef SETST
   return 0;
 }
 
