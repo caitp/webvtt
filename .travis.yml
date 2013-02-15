@@ -4,10 +4,10 @@ compiler:
   - gcc
 
 env:
-  - BUILD_TYPE="GCC check" BUILD="make check" ANALYSIS="" ANALYSIS_ARGS="" AC_OPTIONS=""
+#  - BUILD_TYPE="GCC check" BUILD="make check" ANALYSIS="" ANALYSIS_ARGS="" AC_OPTIONS=""
   - BUILD_TYPE="GCC distcheck" BUILD="make distcheck" ANALYSIS="" ANALYSIS_ARGS="" AC_OPTIONS=""
   - BUILD_TYPE="GCC valgrind" BUILD="make check" ANALYSIS="" ANALYSIS_ARGS="" AC_OPTIONS="--enable-valgrind"
-  - BUILD_TYPE="clang scan-build (without --status-bugs)" BUILD="make check" ANALYSIS="scan-build" ANALYSIS_ARGS="-v -v -k" AC_OPTIONS=""
+#  - BUILD_TYPE="clang scan-build (without --status-bugs)" BUILD="make check" ANALYSIS="scan-build" ANALYSIS_ARGS="-v -v -k" AC_OPTIONS=""
 
 before_install:
   - sudo apt-get -qq update
