@@ -858,17 +858,20 @@ __final:
           return WEBVTT_SUCCESS;
     
         case WEBVTT:
+	  if( *pos < len ) {
+            webvtt_byte ch = text[ *pos ];
+	    if( ch != 0x20 && ch != 0x09 && ch != 0x0A && ch != 0x0D ) {
+	      ERROR_AT( WEBVTT_MALFORMED_TAG, last_line, 1 );
+	      return WEBVTT_PARSE_ERROR;
+	    }
+	  }
           st->flags = WEBVTT_HEADER_TAG;
           FINISH_TOKEN
           break;
 
         default:
-          if( ( self->flags & HAVE_MALFORMED_TAG ) == 0 ) {
-            self->flags |= HAVE_MALFORMED_TAG;
-            ERROR_AT( WEBVTT_MALFORMED_TAG, last_line, last_column );
-          }
-          *pos += self->token_pos ? self->token_pos : 1;
-          FINISH_TOKEN
+          ERROR_AT( WEBVTT_MALFORMED_TAG, last_line, last_column );
+          return WEBVTT_PARSE_ERROR;
       }
       break;
     case WEBVTT_HEADER_TAG:
