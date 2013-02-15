@@ -15,10 +15,17 @@ class CueTest : public ::testing::Test
 protected:
   CueTest() : parser(0) {}
   ~CueTest()
-  { 
-    if( parser ) {
-      delete parser;
-      parser = 0;
+  {
+    if( parser )
+    {
+      try
+	  {
+	    delete parser; parser = 0;
+	  }
+      catch( std::exception e )
+	  {
+		  int x = 5;
+	  }
     }
   }
 
