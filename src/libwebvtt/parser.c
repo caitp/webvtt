@@ -154,7 +154,7 @@ retry:
   last_column = self->column;
   token = webvtt_lex( self, text, pos, len, finish );
   if( token == TIMESTAMP ) {
-    if( !parse_timestamp( self, self->token, result ) ) {
+    if( !parse_timestamp( self->token, result ) ) {
       if( BAD_TIMESTAMP( *result ) ) {
         ERROR_AT_COLUMN( WEBVTT_EXPECTED_TIMESTAMP, last_column );
       } else {
@@ -440,7 +440,7 @@ skip_setting:
             && text[ *pos ] != 0x20 
             && text[ *pos ] != 0x09 ) {
             if( text[ *pos ] == 0x0D || text[ *pos ] == 0x0A ) {
-              return WEBVTT_FINISH_LINE;
+              return WEBVTT_SUCCESS;
             }
             ++( *pos );
             ++self->column;
@@ -452,12 +452,10 @@ skip_setting:
         ERROR( WEBVTT_INVALID_CUESETTING );
         status = WEBVTT_SUCCESS;
         goto skip_setting;
-      } else if( status == WEBVTT_SUCCESS ) {
+      } else if( status == WEBVTT_NEXT_CUESETTING ) {
         mode = PARAMS_LEADING_SPACE;
-      } else if( status == WEBVTT_CONTINUE_LINE ) {
+      } else if( status == WEBVTT_SUCCESS ) {
         status = WEBVTT_SUCCESS;
-      } else if( status == WEBVTT_FINISH_LINE ) {
-        return WEBVTT_SUCCESS;
       }
     }
   }
@@ -544,7 +542,7 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
             if( tk != keyword ) {
               *pos -= tp;
               self->column -= tp;
-              return WEBVTT_CONTINUE_LINE;
+              return WEBVTT_NEXT_CUESETTING;
             }
             if( *pos < len ) {
               webvtt_byte ch = text[ *pos ];
@@ -560,7 +558,7 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
           case WHITESPACE:
             break;
           case NEWLINE:
-            return WEBVTT_FINISH_LINE;
+            return WEBVTT_SUCCESS;
             break;
           default:
             ERROR_AT( WEBVTT_INVALID_CUESETTING, last_line,
@@ -570,7 +568,7 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
             while( *pos < len && text[ *pos ] != 0x20
               && text[ *pos ] != 0x09 ) {
               if( text[ *pos ] == 0x0A || text[ *pos ] == 0x0D ) {
-                return WEBVTT_FINISH_LINE;
+                return WEBVTT_SUCCESS;
               }
               ++( *pos );
               ++self->column;
@@ -635,13 +633,13 @@ bad_value_eol:
           while( *pos < len && text[ *pos ] != 0x20
             && text[ *pos ] != 0x09 ) {
             if( text[ *pos ] == 0x0A || text[ *pos ] == 0x0D ) {
-              return WEBVTT_FINISH_LINE;
+              return WEBVTT_SUCCESS;
             }
             ++( *pos );
             ++self->column;
           }
           if( *pos >= len ) {
-            return WEBVTT_FINISH_LINE;
+            return WEBVTT_SUCCESS;
           }
         }
         break;
@@ -651,7 +649,7 @@ bad_value_eol:
     ERROR( bv );
     goto bad_value_eol;
   }
-  return WEBVTT_CONTINUE_LINE;
+  return WEBVTT_NEXT_CUESETTING;
 }
 
 
