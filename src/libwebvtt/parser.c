@@ -736,7 +736,7 @@ webvtt_parse_position( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *t
     switch( values[ v ] & TOKEN_MASK ) {
       case INTEGER: {
         cue->snap_to_lines = 1;
-        cue->settings.line.no = (int)value;
+        cue->settings.line = (int)value;
       }
       break;
 
@@ -808,7 +808,7 @@ webvtt_parse_line( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
     switch( values[ v ] & TOKEN_MASK ) {
       case INTEGER: {
         cue->snap_to_lines = 1;
-        cue->settings.line.no = (int)value;
+        cue->settings.line = ( int )value;
       }
       break;
 
@@ -821,7 +821,7 @@ webvtt_parse_line( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
           return WEBVTT_SUCCESS;
         }
         cue->snap_to_lines = 0;
-        cue->settings.line.relative_position = (webvtt_uint)value;
+        cue->settings.line = ( int )value;
       } break;
     }
   }
