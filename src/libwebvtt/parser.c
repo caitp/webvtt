@@ -160,7 +160,7 @@ retry:
       } else {
         ERROR_AT_COLUMN( WEBVTT_MALFORMED_TIMESTAMP, last_column );
       }
-      if( !ASCII_ISDIGIT( self->token[self->token_pos - 1] ) ) {
+      if( !webvtt_isdigit( self->token[self->token_pos - 1] ) ) {
         while( *pos < len && text[*pos] != 0x09 && text[*pos] != 0x20 ) {
           ++pos; 
         }
@@ -621,8 +621,8 @@ get_value:
             case PERCENTAGE:
               if( ( flags & SIGN_MASK ) != SIGN_MASK ) {
                 const webvtt_byte p = self->token[ 0 ];
-                if( ( ( flags & NEGATIVE ) && p != ASCII_DASH ) 
-                  || ( ( flags & POSITIVE ) && p == ASCII_DASH ) ) {
+                if( ( ( flags & NEGATIVE ) && p != UTF8_HYPHEN_MINUS ) 
+                  || ( ( flags & POSITIVE ) && p == UTF8_HYPHEN_MINUS ) ) {
                   goto bad_value;
                 }
               }
@@ -1116,7 +1116,7 @@ webvtt_read_cuetext( webvtt_parser self, webvtt_state *st,
           webvtt_release_string( &up->v.text );
           up->type = V_NONE;
           if( WEBVTT_FAILED( status = webvtt_string_putc( &st->v.text,
-            ASCII_LF ) ) ) {
+            UTF8_LESS_THAN ) ) ) {
             webvtt_release_string( &st->v.text );
             st->type = V_NONE;
             if( status == WEBVTT_OUT_OF_MEMORY ) {
