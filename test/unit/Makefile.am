@@ -93,6 +93,7 @@ endif
 XFAIL_TESTS = $(KNOWN_VALGRIND_TEST_FAILURES) \
 	      ciarrow_unittest \
 	      cigeneral_unittest \
+	      cilanguage_unittest \
 	      cilineendings_unittest \
 	      csalign_unittest \
 	      csgeneric_unittest \
@@ -102,6 +103,7 @@ XFAIL_TESTS = $(KNOWN_VALGRIND_TEST_FAILURES) \
 	      csvertical_unittest \
 	      ctgenstructure_unittest \
 	      cuetimes_unittest \
+	      filestructure_unittest \
 	      plboldtag_unittest \
 	      plclasstag_unittest \
 	      plescapecharacter_unittest \
