@@ -40,7 +40,7 @@ webvtt_create_parser( webvtt_cue_fn on_read,
   memset( p->astack, 0, sizeof( p->astack ) );
   p->stack = p->astack;
   p->top = p->stack;
-  p->top->state = T_INITIAL;
+  p->top->callback = &webvtt_parse_header;
   p->stack_alloc = sizeof( p->astack ) / sizeof( p->astack[0] );
 
   p->read = on_read;
@@ -138,7 +138,7 @@ webvtt_finish_parsing( webvtt_parser self )
   }
   self->finish = 1;
   while( !WEBVTT_FAILED(status) ) {
-    webvtt_state *st = SP;
+    webvtt_state *st = self->top;
     webvtt_parse_callback cb = st->callback;
     status = st->callback( self, st, buffer, &pos, 0 );
     if( cb == &webvtt_read_cuetext ) {
@@ -748,7 +748,7 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
     webvtt_uint last_column = self->column;
     webvtt_uint last_pos = *pos;
     webvtt_token tk = webvtt_lex( self, text, pos, len, 1 );
-    webvtt_uint tp = self->token_pos;
+    webvtt_uint token_pos = self->token_pos;
     FINISH_TOKEN
 
     switch( mode ) {
@@ -760,8 +760,8 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
           case VERTICAL:
           case LINE:
             if( tk != keyword ) {
-              *pos -= tp;
-              self->column -= tp;
+              *pos -= token_pos;
+              self->column -= token_pos;
               return WEBVTT_NEXT_CUESETTING;
             }
             if( *pos < len ) {
@@ -783,7 +783,7 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
           default:
             ERROR_AT( WEBVTT_INVALID_CUESETTING, last_line,
               last_column );
-            *pos = *pos + tp + 1;
+            *pos = *pos + token_pos + 1;
  skip_param:
             while( *pos < len && text[ *pos ] != 0x20
               && text[ *pos ] != 0x09 ) {
@@ -816,7 +816,7 @@ webvtt_parse_param( webvtt_parser self, const webvtt_byte *text,
         } else {
           ERROR_AT( WEBVTT_INVALID_CUESETTING_DELIMITER, last_line,
             last_column );
-          *pos = last_pos + tp + 1;
+          *pos = last_pos + token_pos + 1;
         }
         break;
 
@@ -1048,6 +1048,162 @@ webvtt_parse_line( webvtt_parser self, webvtt_cue *cue, const webvtt_byte *text,
   return v >= 0 ? WEBVTT_SUCCESS : v;
 }
 
+WEBVTT_INTERN webvtt_status
+webvtt_parse_header_tag( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
+{
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+  webvtt_uint last_bytes = self->bytes;;
+  webvtt_uint last_pos = *pos;
+  webvtt_uint token_pos;
+  webvtt_token token;
+
+  if( self->finish ) {
+    ERROR( WEBVTT_MALFORMED_TAG );
+    return WEBVTT_PARSE_ERROR;
+  }
+
+  if( ( st->flags & 0xF ) ) {
+    return WEBVTT_SUCCESS;
+  }
+
+  if( !( st->flags & 0xFFFF0000 ) ) {
+    st->flags |= ( ( last_column & 0xFFFF )  << 16 );
+  }
+  token = webvtt_lex( self, text, pos, len, 0 );  
+  token_pos = self->token_pos;
+  self->token_pos = 0;
+
+  if( token == UNFINISHED ) {
+    return WEBVTT_SUCCESS;
+  }
+  else if( token == WEBVTT ) {
+    st->flags = ( st->flags & 0xFFFF0000 ) | WEBVTT_HEADER_TAG; 
+    return WEBVTT_SUCCESS;
+  } else {
+    st->flags &= ~WEBVTT_HEADER_TAG;
+    ERROR_AT( WEBVTT_MALFORMED_TAG, last_line, 1 );
+    return WEBVTT_PARSE_ERROR;
+  } 
+}
+
+WEBVTT_INTERN webvtt_status
+webvtt_parse_header_text( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
+{
+  webvtt_uint last_line = self->line;
+  webvtt_uint last_column = self->column;
+  webvtt_uint last_bytes = self->bytes;;
+  webvtt_uint last_pos = *pos;
+  webvtt_uint token_pos;
+  webvtt_token token;
+
+  if( self->finish || *pos == len ) {
+    return WEBVTT_SUCCESS;
+  }
+
+  if( ( st->flags & 0xF ) != WEBVTT_HEADER_TAG ) {
+    return WEBVTT_SUCCESS;
+  }
+
+  if( !( st->flags & 0xFFFF0000 ) ) {
+    st->flags |= ( ( last_column & 0xFFFF )  << 16 );
+  }
+  token = webvtt_lex( self, text, pos, len, 0 );  
+  token_pos = self->token_pos;
+  self->token_pos = 0;
+
+  if( token == UNFINISHED ) {
+    return WEBVTT_SUCCESS;
+  }
+  else if( token == WHITESPACE ) {
+    st->flags = WEBVTT_HEADER_COMMENT; 
+    return WEBVTT_SUCCESS;
+  } else if( token == NEWLINE ) {
+    st->flags = ( 1 << 16 ) | WEBVTT_HEADER_EOL;
+    return WEBVTT_SUCCESS;
+  } else {
+    st->flags &= ~WEBVTT_HEADER_TAG;
+    ERROR_AT( WEBVTT_MALFORMED_TAG, last_line, ( st->flags >> 16 ) );
+    return WEBVTT_PARSE_ERROR;
+  }
+}
+
+WEBVTT_INTERN webvtt_status
+webvtt_parse_header_comment( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
+{
+  int v;
+  webvtt_uint last_pos = *pos;
+  if( self->finish || *pos == len ) {
+    return WEBVTT_SUCCESS;
+  }
+
+  if( ( st->flags & 0xF ) != WEBVTT_HEADER_COMMENT ) {
+    return WEBVTT_SUCCESS;
+  }
+
+  if( find_newline( text, pos, len ) == 1 ) {
+    st->flags = WEBVTT_HEADER_EOL;
+  }
+  self->bytes += ( *pos - last_pos );
+  return WEBVTT_SUCCESS;
+}
+
+WEBVTT_INTERN webvtt_status
+webvtt_parse_header_eol( webvtt_parser self, webvtt_state *st,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
+{
+  webvtt_uint last_column;
+  webvtt_uint last_bytes;
+  webvtt_uint token_pos; 
+  webvtt_uint last_pos;
+  webvtt_token token;
+
+  if( self->finish || *pos == len ) {
+    return WEBVTT_SUCCESS;
+  }
+
+  if( ( st->flags & 0xF ) != WEBVTT_HEADER_EOL ) {
+    return WEBVTT_SUCCESS;
+  }
+
+  if( ( st->flags >> 16 ) > 1 ) {
+    return WEBVTT_SUCCESS;
+  }
+
+  last_pos = *pos;
+  last_column = self->column;
+  last_bytes = self->bytes;
+  token = webvtt_lex( self, text, pos, len, 1 );
+  token_pos = self->token_pos;
+  FINISH_TOKEN
+
+  if( token == UNFINISHED ) {
+    return WEBVTT_SUCCESS;
+  } else if( token == NEWLINE ) {
+    st->flags = ( ( ( st->flags >> 16 ) + 1 ) << 16 ) | WEBVTT_HEADER_EOL;
+    if( ( st->flags >> 16 ) >= 2 ) {
+      st->flags = WEBVTT_HEADER_FINISHED;
+      return WEBVTT_SUCCESS;
+    }
+  } else {
+    if( ( st->flags >> 16 ) == 1 ) {
+      ERROR_AT( WEBVTT_EXPECTED_EOL, self->line, last_column );
+      self->bytes = last_bytes;
+      self->column = last_column;
+      *pos = last_pos;
+      st->flags = WEBVTT_HEADER_FINISHED;
+    } else {
+      // If this happens, the function has been called incorrectly.
+      return WEBVTT_INVALID_PARAM;
+    }
+  }
+ 
+  return WEBVTT_SUCCESS;
+}
+
 /**
  * Read a WEBVTT header
  */
@@ -1055,115 +1211,30 @@ WEBVTT_INTERN webvtt_status
 webvtt_parse_header( webvtt_parser self, webvtt_state *st,
   const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
 {
-  int v;
-  webvtt_token token;
-  webvtt_uint last_line;
-  webvtt_uint last_column;
-  if( self->finish ) {
-    goto __final;
-  }
-
-  while( *pos < len )
-  {
-__final:
-    last_line = self->line;
-    last_column = self->column;
-    switch( st->flags )
-    {
-    case 0:
-      token = webvtt_lex( self, text, pos, len, self->finish );
-      switch( token ) {
-        case UNFINISHED:
-          return WEBVTT_SUCCESS;
-    
-        case WEBVTT:
-	  if( *pos < len ) {
-            webvtt_byte ch = text[ *pos ];
-	    if( ch != 0x20 && ch != 0x09 && ch != 0x0A && ch != 0x0D ) {
-	      ERROR_AT( WEBVTT_MALFORMED_TAG, last_line, 1 );
-	      return WEBVTT_PARSE_ERROR;
-	    }
-	  }
-          st->flags = WEBVTT_HEADER_TAG;
-          FINISH_TOKEN
-          break;
-
-        default:
-          ERROR_AT( WEBVTT_MALFORMED_TAG, last_line, last_column );
-          return WEBVTT_PARSE_ERROR;
-      }
-      break;
-    case WEBVTT_HEADER_TAG:
-      token = webvtt_lex( self, text, pos, len, self->finish );
-      switch( token ) {
-        case UNFINISHED:
-          return WEBVTT_SUCCESS;
-
-        case WHITESPACE:
-          st->flags = WEBVTT_HEADER_COMMENT;
-          break;
-
-        case NEWLINE:
-          st->flags = WEBVTT_HEADER_EOL;
-          FINISH_TOKEN
-          break;
-
-        default:
-          ERROR(WEBVTT_MALFORMED_TAG);
-          return WEBVTT_PARSE_ERROR;
-      }
-      break;
-
-    case WEBVTT_HEADER_COMMENT:
-      if( self->finish ) {
-        if( st->type == V_TEXT ) {
-          webvtt_release_string( &st->v.text );
-          st->type = V_NONE;
-        }
-        return WEBVTT_SUCCESS;
-      }
-      if( st->type != V_TEXT ) {
-        st->type = V_TEXT;
-        webvtt_init_string( &st->v.text );
-      }
-      v = webvtt_string_getline( &st->v.text, text, pos, len, 0, 0, 0 );
-      if( v < 0 ) {
-        webvtt_release_string( &st->v.text );
-        ERROR( WEBVTT_ALLOCATION_FAILED );
-        return WEBVTT_OUT_OF_MEMORY;
-      }
-      if( v > 0 ) {
-        if( webvtt_lex( self, text, pos, len,  self->finish  ) == NEWLINE ) {
-          webvtt_release_string( &st->v.text );
-          st->flags = WEBVTT_HEADER_EOL;
-        }
-      }
-      break;
-
-    case WEBVTT_HEADER_EOL:
-      if( self->finish ) {
-        return WEBVTT_SUCCESS;
-      }
-      token = webvtt_lex( self, text, pos, len, self->finish  );
-      switch( token ) {
-        case NEWLINE:
-          FINISH_TOKEN
-          st->flags = 0;
-          st->callback = &webvtt_parse_body;
-          return WEBVTT_SUCCESS;
-
-        default:
-          *pos = *pos - self->token_pos;
-          FINISH_TOKEN
-        case BADTOKEN:
-          /* error, expected eol */
-          ERROR_AT_COLUMN(WEBVTT_EXPECTED_EOL,last_column);
-          st->callback = &webvtt_parse_body;
-          return WEBVTT_SUCCESS;
-      }
+  webvtt_status status;
+  webvtt_parse_callback cb = 0;
+  webvtt_parse_callback callbacks[] = {
+    &webvtt_parse_header_tag,
+    &webvtt_parse_header_text,
+    &webvtt_parse_header_comment,
+    &webvtt_parse_header_eol,
+    0, 
+  };
+  
+  int idx;
+  do {
+    idx = st->flags & 0xF;
+    if( idx > 4 || !( cb = callbacks[idx] ) ) {
+      /* If there's no callback, it's finished. */
+      st->flags = 0;
+      st->callback = &webvtt_parse_body;
+      return WEBVTT_SUCCESS;   
     }
-  }
-  return WEBVTT_SUCCESS;
+    if( WEBVTT_FAILED( status = cb( self, st, text, pos, len ) ) ) {
+      break;
+    }
+  } while( *pos < len );
+  return status;
 }
 
 /**
