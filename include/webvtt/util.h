@@ -192,6 +192,12 @@ extern "C" {
      * Parser should move to the next cuesetting.
      */
     WEBVTT_NEXT_CUESETTING = -12,
+
+    /**
+     * Error returned if an assertion fails
+     * (Will not terminate the application)
+     */
+    WEBVTT_FAILED_ASSERTION = -13
   };
 
   typedef enum webvtt_status_t webvtt_status;

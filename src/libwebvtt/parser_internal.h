@@ -30,6 +30,14 @@
 # include <webvtt/parser.h>
 # include "string_internal.h"
 
+/**
+ * This is just a convenience for development, where we want to terminate on
+ * failure
+ */
+# ifdef FATAL_ASSERTION
+#   include <assert.h>
+# endif
+
 typedef enum
 webvtt_token_t {
   BADTOKEN = -2,
@@ -217,20 +225,56 @@ WEBVTT_INTERN webvtt_token webvtt_lex( webvtt_parser self, const webvtt_byte *bu
 WEBVTT_INTERN webvtt_status webvtt_lex_word( webvtt_parser self, webvtt_string *pba, const webvtt_byte *buffer, webvtt_uint *pos, webvtt_uint length, webvtt_bool finish );
 WEBVTT_INTERN int parse_timestamp( const webvtt_byte *b, webvtt_timestamp *result );
 
+/**
+ * Parse string of cue parameters
+ */
+WEBVTT_INTERN webvtt_status webvtt_parse_params( webvtt_parser,
+  webvtt_cue *cue, const webvtt_byte *text, webvtt_uint *pos,
+  webvtt_uint len );
+/**
+ * Parse individual cuesetting parameters
+ */
+WEBVTT_INTERN webvtt_status webvtt_parse_align( webvtt_parser, webvtt_cue *cue,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_line( webvtt_parser, webvtt_cue *cue,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_position( webvtt_parser,
+  webvtt_cue *cue, const webvtt_byte *text, webvtt_uint *pos,
+  webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_size( webvtt_parser, webvtt_cue *cue,
+  const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_vertical( webvtt_parser,
+  webvtt_cue *cue, const webvtt_byte *text, webvtt_uint *pos,
+  webvtt_uint len );
+
 #define BAD_TIMESTAMP(ts) ( ( ts ) == 0xFFFFFFFFFFFFFFFF )
 
-#define ERROR(Code) \
-do \
-{ \
-  if( !self->error || self->error(self->userdata,self->line,self->column,Code) < 0 ) \
+/**
+ * Assertion macro which will return a webvtt status of WEBVTT_FAILED_ASSERTION
+ * unless FATAL_ASSERTION is defined at compile-time.
+ */
+# ifndef FATAL_ASSERTION
+#   define safe_assert(condition) \
+  if( !(condition) ) { \
+    return WEBVTT_FAILED_ASSERTION; \
+  }
+# else
+#   define safe_assert(condition) assert( condition )
+# endif
+
+#define ERROR_AT(Code, Line, Column) \
+do { \
+  if( !self->error \
+    || self->error( self->userdata, (Line), (Column), (Code) ) < 0 ) { \
     return WEBVTT_PARSE_ERROR; \
+  } \
 } while(0)
 
-#define ERROR_AT_COLUMN(Code,Column) \
-do \
-{ \
-  if( !self->error || self->error(self->userdata,self->line,(Column),Code) < 0 ) \
-    return WEBVTT_PARSE_ERROR; \
-} while(0)
+#define ERROR(Code) ERROR_AT((Code), self->line, self->column)
+#define ERROR_AT_COLUMN(Code,Column) ERROR_AT( (Code), self->line, (Column))
 
 #endif
