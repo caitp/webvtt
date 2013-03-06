@@ -325,6 +325,7 @@ webvtt_string_getline( webvtt_string *src, const webvtt_byte *buffer,
     ret = 1; /* indicate that we found EOL */
   }
   len = (webvtt_uint)( p - s );
+  printf( "length: %u\n", len );
   *pos += len;
   if( d->length + len + 1 >= d->alloc ) {
     if( truncate && d->alloc >= WEBVTT_MAX_LINE ) {
@@ -339,6 +340,9 @@ webvtt_string_getline( webvtt_string *src, const webvtt_byte *buffer,
   }
 
   /* Copy everything in */
+  printf( "ret ? %u\n", ret );
+  printf( "%u + %u < %u ? %s\n", d->length, len, d->alloc, d->length + len <
+    d->alloc ? "yes" : "no" );
   if( len && ret >= 0 && d->length + len < d->alloc ) {
     memcpy( d->text + d->length, s, len );
     d->length += len;
