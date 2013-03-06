@@ -287,14 +287,14 @@ grow( webvtt_string *str, webvtt_uint need )
 
 WEBVTT_EXPORT int
 webvtt_string_getline( webvtt_string *src, const webvtt_byte *buffer,
-    webvtt_uint *pos, webvtt_uint len, int *truncate, webvtt_bool finish, webvtt_bool retain_new_line )
+    webvtt_uint *pos, int len, int *truncate, webvtt_bool finish, webvtt_bool retain_new_line )
 {
   int ret = 0;
   webvtt_string *str = src;
   webvtt_string_data *d = 0;
   const webvtt_byte *s = buffer + *pos;
   const webvtt_byte *p = s;
-  const webvtt_byte *n = buffer + len;
+  const webvtt_byte *n;
 
   /**
    *if this is public now, maybe we should return webvtt_status so we can
@@ -313,6 +313,12 @@ webvtt_string_getline( webvtt_string *src, const webvtt_byte *buffer,
     d = str->d;
   }
 
+  if( len < 0 ) {
+    len = strlen( s );
+  }
+
+  n = s + len;
+
   while( p < n && *p != UTF8_CARRIAGE_RETURN && *p != UTF8_LINE_FEED ) {
     ++p;
   }
@@ -324,7 +330,7 @@ webvtt_string_getline( webvtt_string *src, const webvtt_byte *buffer,
   if( p < n || finish ) {
     ret = 1; /* indicate that we found EOL */
   }
-  len = (webvtt_uint)( p - s );
+  len = (int)( p - s );
   printf( "length: %u\n", len );
   *pos += len;
   if( d->length + len + 1 >= d->alloc ) {
