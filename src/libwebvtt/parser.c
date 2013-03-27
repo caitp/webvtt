@@ -622,6 +622,51 @@ webvtt_byte *text,
   return v >= 0 ? WEBVTT_SUCCESS : v;
 }
 
+/**
+ * Read a timestamp into 'result' field, following the rules of the cue-times
+ * section of the draft:
+ * http://dev.w3.org/html5/webvtt/#collect-webvtt-cue-timings-and-settings
+ *
+ * - Ignore whitespace
+ * - Return immediately after having parsed a timestamp
+ * - Return error if timestamp invalid.
+ */
+WEBVTT_INTERN webvtt_status
+webvtt_get_timestamp( webvtt_parser self, webvtt_timestamp *result,
+                      const webvtt_byte *text, webvtt_uint *pos,
+                      webvtt_uint len )
+{
+  webvtt_uint last_column = self->column;
+  webvtt_uint last_line = self->line;
+  webvtt_token token;
+  while( *pos < len ) {
+    last_column = self->column;
+    last_line = self->line;
+    token = webvtt_lex( self, text, pos, len, 1 );
+    self->token_pos = 0;
+    if( token == TIMESTAMP ) {
+      if( !parse_timestamp( self->token, result ) ) {
+        /* Read a bad timestamp, throw away and abort cue */
+        ERROR_AT( WEBVTT_MALFORMED_TIMESTAMP, last_line, last_column );
+        return WEBVTT_PARSE_ERROR;
+      }
+      return WEBVTT_SUCCESS;
+    }
+    else if( token == WHITESPACE ) {
+      /* Ignore whitespace */
+    } else {
+      /* Not a timestamp, this is an error. */
+      ERROR_AT( WEBVTT_EXPECTED_TIMESTAMP, last_line, last_column );
+      return WEBVTT_PARSE_ERROR;
+    }
+  }
+
+  /* If we finish entire line without reading a timestamp,
+     this is not a proper cue header and should be discarded. */
+  ERROR_AT( WEBVTT_EXPECTED_TIMESTAMP, last_line, last_column );
+  return WEBVTT_PARSE_ERROR;
+}
+
 WEBVTT_INTERN int
 parse_cueparams( webvtt_parser self, const webvtt_byte *buffer,
                  webvtt_uint len, webvtt_cue *cue )
@@ -633,8 +678,10 @@ parse_cueparams( webvtt_parser self, const webvtt_byte *buffer,
   webvtt_uint pos = 0;
 
   enum cp_state {
-    CP_T1, CP_T2, CP_T3, CP_T4, CP_T5, /* 'start' cuetime, whitespace1,
-                   'separator', whitespace2, 'end' cuetime */
+    CP_STARTTIME = 0,
+    CP_SEPARATOR,
+    CP_ENDTIME,
+
     CP_CS0, /* pre-cuesetting */
 
     CP_SD, /* cuesettings delimiter here */
@@ -654,118 +701,73 @@ parse_cueparams( webvtt_parser self, const webvtt_byte *buffer,
     CP_L2,
   };
 
-  enum cp_state state = CP_T1;
+  enum cp_state state = CP_STARTTIME;
 
 #define SETST(X) do { baddelim = 0; state = (X); } while( 0 )
 
   self->token_pos = 0;
   while( pos < len ) {
-    webvtt_uint last_column = self->column;
-    webvtt_token token = webvtt_lex( self, buffer, &pos, len, 1 );
-    webvtt_uint tlen = self->token_pos;
-    self->token_pos = 0;
-_recheck:
+    webvtt_uint last_column;
+    webvtt_uint last_line;
+    webvtt_token token;
+    webvtt_uint token_len;
+
     switch( state ) {
-        /* start timestamp */
-      case CP_T1:
-        if( token == WHITESPACE && !unexpected_whitespace ) {
-          ERROR_AT_COLUMN( WEBVTT_UNEXPECTED_WHITESPACE, self->column );
-          unexpected_whitespace = 1;
-        } else if( token == TIMESTAMP )
-          if( !parse_timestamp( self->token, &cue->from ) ) {
-            ERROR_AT_COLUMN(
-              ( BAD_TIMESTAMP( cue->from )
-                ? WEBVTT_EXPECTED_TIMESTAMP
-                : WEBVTT_MALFORMED_TIMESTAMP ), last_column  );
-            if( self->token_pos && !webvtt_isdigit( self->token[self->token_pos - 1] ) ) {
-              while( pos < len && buffer[pos] != 0x09 && buffer[pos] != 0x20 ) { ++pos; }
-            }
-            if( BAD_TIMESTAMP( cue->from ) )
-            { return -1; }
-            SETST( CP_T2 );
-          } else {
-            SETST( CP_T2 );
-          }
-        else {
-          ERROR_AT_COLUMN( WEBVTT_EXPECTED_TIMESTAMP, last_column );
+      /* start timestamp */
+      case CP_STARTTIME:
+        if( WEBVTT_FAILED( webvtt_get_timestamp( self, &cue->from, buffer, &pos,
+                                                 len ) ) ) {
+          /* abort cue */
           return -1;
         }
+        state = CP_SEPARATOR;
         break;
-        /* end timestamp */
-      case CP_T5:
-        if( token == WHITESPACE ) {
-          /* no problem, just ignore it and continue */
-        } else if( token == TIMESTAMP )
-          if( !parse_timestamp( self->token, &cue->until ) ) {
-            ERROR_AT_COLUMN(
-              ( BAD_TIMESTAMP( cue->until )
-                ? WEBVTT_EXPECTED_TIMESTAMP
-                : WEBVTT_MALFORMED_TIMESTAMP ), last_column  );
-            if( !webvtt_isdigit( self->token[self->token_pos - 1] ) ) {
-              while( pos < len && buffer[pos] != 0x09 && buffer[pos] != 0x20 ) { ++pos; }
-            }
-            if( BAD_TIMESTAMP( cue->until ) )
-            { return -1; }
-            SETST( CP_CS0 );
-          } else {
-            SETST( CP_CS0 );
-          }
-        else {
-          ERROR_AT_COLUMN( WEBVTT_EXPECTED_TIMESTAMP, last_column );
+
+      /* '-->' separator */
+      case CP_SEPARATOR:
+        last_column = self->column;
+        last_line = self->line;
+        token = webvtt_lex( self, buffer, &pos, len, 1 );
+        self->token_pos = 0;
+        if( token == SEPARATOR ) {
+          /* Expect end timestamp */
+          state = CP_ENDTIME;
+        } else if( token == WHITESPACE ) {
+          /* ignore whitespace */
+        } else {
+          /* Unexpected token. Abort cue. */
+          ERROR_AT( WEBVTT_EXPECTED_CUETIME_SEPARATOR, last_line, last_column );
           return -1;
         }
         break;
 
-        /* whitespace 1 */
-      case CP_T2:
-        switch( token ) {
-          case SEPARATOR:
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
-            SETST( CP_T4 );
-            break;
-          case WHITESPACE:
-            SETST( CP_T3 );
-            break;
-
-          case UNFINISHED: /* should never happen */
-            break;
-
-          default: /* Syntax error */
-            break;
+      /* end timestamp */
+      case CP_ENDTIME:
+	if( WEBVTT_FAILED( webvtt_get_timestamp( self, &cue->until, buffer,
+                                                 &pos, len ) ) ) {
+          /* abort cue */
+          return -1;
         }
+        /* Expect cuesetting */
+        state = CP_CS0;
         break;
-      case CP_T3:
-        switch( token ) {
-          case WHITESPACE: /* ignore this whitespace */
-            break;
 
-          case SEPARATOR:
-            SETST( CP_T4 );
-            break;
 
-          case TIMESTAMP:
-            ERROR( WEBVTT_MISSING_CUETIME_SEPARATOR );
-            SETST( CP_T5 );
-            goto _recheck;
+      default:
+        /**
+         * Most of these branches need to read a token for the time
+         * being, so they're grouped together here.
+         *
+         * TODO: Remove need to call lexer at all here.
+         */
+        last_column = self->column;
+        last_line = self->line;
+        token = webvtt_lex( self, buffer, &pos, len, 1 );
+        token_len = self->token_pos;
+        self->token_pos = 0;
 
-          default: /* some garbage */
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_CUETIME_SEPARATOR, last_column );
-            return -1;
-        }
-        break;
-      case CP_T4:
-        switch( token ) {
-          case WHITESPACE:
-            SETST( CP_T5 );
-            break;
-          case TIMESTAMP:
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
-            goto _recheck;
-          default:
-            ERROR_AT_COLUMN( WEBVTT_EXPECTED_WHITESPACE, last_column );
-            goto _recheck;
-        }
-        break;
+        switch( state ) {
+
 #define CHKDELIM \
 if( baddelim ) \
   ERROR_AT_COLUMN(WEBVTT_INVALID_CUESETTING_DELIMITER,baddelim); \
@@ -784,6 +786,8 @@ else if( !have_ws ) \
          */
       case CP_CS0:
         switch( token ) {
+          case NEWLINE:
+            return 0;
           case WHITESPACE:
             have_ws = last_column;
             break;
@@ -798,7 +802,7 @@ else if( !have_ws ) \
           case ALIGN:
           {
             webvtt_status status;
-            pos -= tlen; /* Required for parse_align() */
+            pos -= token_len; /* Required for parse_align() */
             self->column = last_column; /* Reset for parse_align() */
             status = webvtt_parse_align( self, cue, buffer, &pos, len );
             if( status == WEBVTT_PARSE_ERROR ) {
@@ -814,7 +818,7 @@ else if( !have_ws ) \
           case LINE:
           {
             webvtt_status status;
-            pos -= tlen; /* Required for parse_align() */
+            pos -= token_len; /* Required for parse_align() */
             self->column = last_column; /* Reset for parse_align() */
             status = webvtt_parse_line( self, cue, buffer, &pos, len );
             if( status == WEBVTT_PARSE_ERROR ) {
@@ -1048,6 +1052,7 @@ break
 #undef WS
       default: /* Shouldn't happen */
         break;
+    }
     }
     self->token_pos = 0;
   }

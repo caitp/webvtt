@@ -271,7 +271,14 @@ webvtt_lex( webvtt_parser self, const webvtt_byte *buffer, webvtt_uint *pos, web
             OVERFLOW(INTEGER)
             SET_STATE(L_DIGIT0)
           }
-          U_COLON { SET_STATE(L_TIMESTAMP1) }
+          U_COLON {
+            /* Don't return a TIMESTAMP if we start with UTF8_HYPHEN_MINUS */
+            if( self->token[0] == UTF8_HYPHEN_MINUS ) {
+              RETURN(INTEGER);
+            } else {
+              SET_STATE(L_TIMESTAMP1)
+            }
+          }
           U_PERCENT { RETURN(PERCENTAGE) }
         DEFAULT { BACKUP AND RETURN(INTEGER) }
         END_STATE_EX
