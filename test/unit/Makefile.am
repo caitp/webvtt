@@ -30,6 +30,7 @@ LDADD = $(LIBS)
 
 INTERNAL_TESTS = \
   lexer_unittest \
+	parsecuesetting_unittest \
   readcuetext_unittest \
   string_unittest
 
@@ -118,6 +119,7 @@ EXTRA_DIST += cue_testfixture payload_testfixture test_parser
 
 # Utility unit tests
 lexer_unittest_SOURCES = lexer_unittest.cpp
+parsecuesetting_unittest_SOURCES = parsecuesetting_unittest.cpp
 readcuetext_unittest_SOURCES = readcuetext_unittest.cpp
 string_unittest_SOURCES = string_unittest.cpp
 

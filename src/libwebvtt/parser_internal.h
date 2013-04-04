@@ -236,6 +236,12 @@ WEBVTT_INTERN webvtt_token webvtt_lex_newline( webvtt_parser self, const
 
 WEBVTT_INTERN int parse_timestamp( const webvtt_byte *b, webvtt_timestamp *result );
 
+WEBVTT_INTERN webvtt_status webvtt_parse_align( webvtt_parser self,
+  webvtt_cue *cue, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
+WEBVTT_INTERN webvtt_status webvtt_parse_line( webvtt_parser self,
+  webvtt_cue *cue, const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len );
+
 WEBVTT_INTERN webvtt_status do_push( webvtt_parser self, webvtt_uint token,
   webvtt_uint back, webvtt_uint state, void *data, webvtt_state_value_type type,
   webvtt_uint line, webvtt_uint column );

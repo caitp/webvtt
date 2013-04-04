@@ -467,9 +467,9 @@ webvtt_parse_cuesetting( webvtt_parser self, const webvtt_byte *text,
             ERROR_AT( WEBVTT_INVALID_CUESETTING, last_line,
               last_column );
             *pos = *pos + tp + 1;
-            while( *pos < len && text[ *pos ] != 0x20
-              && text[ *pos ] != 0x09 ) {
-              if( text[ *pos ] == 0x0A || text[ *pos ] == 0x0D ) {
+            while( *pos < len && text[ *pos ] != ' '
+              && text[ *pos ] != '\t' ) {
+              if( text[ *pos ] == '\r' || text[ *pos ] == '\n') {
                 return WEBVTT_SUCCESS;
               }
               ++( *pos );
@@ -511,8 +511,8 @@ get_value:
           *value_column = last_column;
           if( *pos < len ) {
             webvtt_byte ch = text[ *pos ];
-            if( ch != 0x20 && ch != 0x09
-              && ch != 0x0D && ch != 0x0A ) {
+            if( ch != ' ' && ch != '\t'
+              && ch != '\r' && ch != '\n' ) {
               goto bad_value;
             }
           }
@@ -536,16 +536,16 @@ get_value:
 bad_value:
           ERROR_AT( bv, last_line, last_column );
 bad_value_eol:
-          while( *pos < len && text[ *pos ] != 0x20
-            && text[ *pos ] != 0x09 ) {
-            if( text[ *pos ] == 0x0A || text[ *pos ] == 0x0D ) {
-              return WEBVTT_SUCCESS;
+          while( *pos < len && text[ *pos ] != ' '
+            && text[ *pos ] != '\t' ) {
+            if( text[ *pos ] == '\r' || text[ *pos ] == '\n' ) {
+              return WEBVTT_PARSE_ERROR;
             }
             ++( *pos );
             ++self->column;
           }
           if( *pos >= len ) {
-            return WEBVTT_SUCCESS;
+            return WEBVTT_PARSE_ERROR;
           }
         }
         break;
@@ -559,9 +559,8 @@ bad_value_eol:
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_parse_align( webvtt_parser self, webvtt_cue *cue, const
-webvtt_byte *text,
-  webvtt_uint *pos, webvtt_uint len )
+webvtt_parse_align( webvtt_parser self, webvtt_cue *cue,
+                    const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
 {
   webvtt_uint last_line = self->line;
   webvtt_uint last_column = self->column;
@@ -584,9 +583,8 @@ webvtt_byte *text,
 }
 
 WEBVTT_INTERN webvtt_status
-webvtt_parse_line( webvtt_parser self, webvtt_cue *cue, const
-webvtt_byte *text,
-  webvtt_uint *pos, webvtt_uint len )
+webvtt_parse_line( webvtt_parser self, webvtt_cue *cue,
+                   const webvtt_byte *text, webvtt_uint *pos, webvtt_uint len )
 {
   webvtt_uint last_line = self->line;
   webvtt_uint last_column = self->column;
