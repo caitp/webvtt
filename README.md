@@ -41,13 +41,77 @@ When running tests with valgrind, any test that fails valgrind (even if it passe
 
 ##Routines available to application:
 ### Parser Object
-        webvtt_status webvtt_create_parser( webvtt_cue_fn on_read, webvtt_error_fn on_error, void *userdata, webvtt_parser *ppout );
-        void webvtt_delete_parser( webvtt_parser parser );
-        webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );
-        webvtt_status webvtt_finish_parsing( webvtt_parser self );
-
+		
+        ####webvtt_status webvtt_create_parser( webvtt_cue_fn on_read, webvtt_error_fn on_error, void *userdata, webvtt_parser *ppout );
+		####Returns: webvtt_status
+		####Parameters: 
+				webvtt_cue_fn - pointer to function used to read cue.
+				webvtt_error_fn - pointer to function used for error handling.
+				void* - pointer to an input file that constains the user data to parse.
+				webvtt_parser - instance of the webvtt_parser object.
+		####Description:
+			Initializes a webvtt parser instance with the arguments supplied.
+		####Code Example:
+		
+			  if( ( result = webvtt_create_parser( &cue, &error, (void *)input_file, &vtt ) ) != WEBVTT_SUCCESS ) {
+				fprintf( stderr, "error: failed to create VTT parser.\n" );
+				fclose( fh );
+				return 1;
+			  }
+		  
+        ####void webvtt_delete_parser( webvtt_parser parser );
+		####Returns: webvtt_status
+		####Parameters:
+			webvtt_parser - instance of the webvtt_parser object.
+		####Description:
+			Deletes the supplied webvtt_parser object.
+		####Code Example:
+			webvtt_parser vtt;
+			
+			/* Code that uses webvtt_parser Here */
+			
+			// clean up
+			webvtt_delete_parser( vtt );
+			
+        ####webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );
+		####Returns: webvtt_status
+		####Parameters:
+			webvtt_parser - instance of the webvtt_parser object.
+			const void* - buffer of cue text to be parsed.
+			webvtt_uint - unsigned int length of the buffer of cue text.
+		####Description:
+			Parses cuetext that is supplied in the buffer parameter.
+		####Code Example:
+			char buffer[0x1000];
+			webvtt_uint n_read = (webvtt_uint)fread( buffer, 1, sizeof(buffer), fh );
+			finished = feof( fh );
+			if( WEBVTT_FAILED(result = webvtt_parse_chunk( vtt, buffer, n_read )) ) {
+			  return 1;
+			}
+			
+        ####webvtt_status webvtt_finish_parsing( webvtt_parser self );
+		####Returns: webvtt_status
+		####Parameters:
+			webvtt_parser - instance of the webvtt_parser object.
+		####Description:
+			Finishes parsing and cleans up the parse state stack
+		###Code Example:
+			  do {
+				char buffer[0x1000];
+				webvtt_uint n_read = (webvtt_uint)fread( buffer, 1, sizeof(buffer), fh );
+				finished = feof( fh );
+				if( WEBVTT_FAILED(result = webvtt_parse_chunk( vtt, buffer, n_read )) ) {
+				  return 1;
+				}
+			} while( !finished && result == WEBVTT_SUCCESS );
+	  webvtt_finish_parsing( vtt );
 ### WebVTT Cues
-        webvtt_status webvtt_create_cue( webvtt_cue **pcue );
+        ####webvtt_status webvtt_create_cue( webvtt_cue **pcue );
+		####Returns: webvtt_status
+		####Parameters:
+			webvtt_cue - a cue object that represents a webvtt cue in a .vtt file.
+	    ####Description:
+		
         void webvtt_ref_cue( webvtt_cue *cue );
         void webvtt_release_cue( webvtt_cue **pcue );
         int webvtt_validate_cue( webvtt_cue *cue );
