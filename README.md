@@ -41,9 +41,9 @@ When running tests with valgrind, any test that fails valgrind (even if it passe
 
 ##Routines available to application:
 ### Parser Object
-#### webvtt_status webvtt_create_parser( webvtt_cue_fn on_read, webvtt_error_fn on_error, void *userdata, webvtt_parser *ppout );
-#### Returns: webvtt_status
-#### Parameters: 
+####webvtt_status webvtt_create_parser( webvtt_cue_fn on_read, webvtt_error_fn on_error, void *userdata, webvtt_parser *ppout );
+####Returns: webvtt_status
+####Parameters: 
 				webvtt_cue_fn - pointer to function used to read cue.
 				webvtt_error_fn - pointer to function used for error handling.
 				void* - pointer to an input file that constains the user data to parse.
