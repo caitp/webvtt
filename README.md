@@ -41,38 +41,45 @@ When running tests with valgrind, any test that fails valgrind (even if it passe
 
 ##Routines available to application:
 ### Parser Object
-####webvtt_status webvtt_create_parser( webvtt_cue_fn on_read, webvtt_error_fn on_error, void *userdata, webvtt_parser *ppout );
-####Returns: webvtt_status
-####Parameters: 
-				webvtt_cue_fn - pointer to function used to read cue.
-				webvtt_error_fn - pointer to function used for error handling.
-				void* - pointer to an input file that constains the user data to parse.
-				webvtt_parser - instance of the webvtt_parser object.
-		#### Description:
-			Initializes a webvtt parser instance with the arguments supplied.
-		#### Code Example:
-		
-			  if( ( result = webvtt_create_parser( &cue, &error, (void *)input_file, &vtt ) ) != WEBVTT_SUCCESS ) {
-				fprintf( stderr, "error: failed to create VTT parser.\n" );
-				fclose( fh );
-				return 1;
-			  }
-		  
-        #### void webvtt_delete_parser( webvtt_parser parser );
-		#### Returns: webvtt_status
-		#### Parameters:
-			webvtt_parser - instance of the webvtt_parser object.
-		#### Description:
-			Deletes the supplied webvtt_parser object.
-		#### Code Example:
-			webvtt_parser vtt;
+
+
+```C
+webvtt_status webvtt_create_parser(webvtt_cue_fn on_read, webvtt_error_fn on_error, void* userdata, webvtt_parser *ppout );
+```
+**Returns:** webvtt_status <br />
+**Parameters:** <br />
+	**webvtt_cue_fn** - pointer to function used to read cue.<br />
+	**webvtt_error_fn** - pointer to function used for error handling.<br />
+	**void* userdata** - pointer to an input file that constains the user data to parse.
+	**webvtt_parser** - instance of the webvtt_parser object.
+**Description:** <br />
+	Initializes a webvtt parser instance with the arguments supplied.<br />
+**Code Example:**<br />
+```C	
+	if( ( result = webvtt_create_parser( &cue, &error, (void *)input_file, &vtt ) ) != WEBVTT_SUCCESS ) {
+		fprintf( stderr, "error: failed to create VTT parser.\n" );
+		fclose( fh );
+		return 1;
+	}
+```
+
+```C
+void webvtt_delete_parser( webvtt_parser parser );**
+```
+**Returns:** webvtt_status
+**Parameters:**
+	**webvtt_parser** - instance of the webvtt_parser object.
+**Description:**
+	Deletes the supplied webvtt_parser object.
+**Code Example:**
+	webvtt_parser vtt;
 			
-			/* Code that uses webvtt_parser Here */
+	/* Code that uses webvtt_parser Here */
 			
-			// clean up
-			webvtt_delete_parser( vtt );
+	// clean up
+	**webvtt_delete_parser( vtt );**
 			
-        #### webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );
+**webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );**
 		#### Returns: webvtt_status
 		#### Parameters:
 			webvtt_parser - instance of the webvtt_parser object.
