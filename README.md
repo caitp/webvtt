@@ -50,10 +50,11 @@ webvtt_status webvtt_create_parser(webvtt_cue_fn on_read, webvtt_error_fn on_err
 **Parameters:** <br /><br />
 	**webvtt_cue_fn** - pointer to function used to read cue.<br />
 	**webvtt_error_fn** - pointer to function used for error handling.<br />
-	**void* userdata** - pointer to an input file that constains the user data to parse.
-	**webvtt_parser** - instance of the webvtt_parser object.
+	**void* userdata** - pointer to an input file that constains the user data to parse.<br />
+	**webvtt_parser** - instance of the webvtt_parser object.<br />
 **Description:** <br /><br />
-	Initializes a webvtt parser instance with the arguments supplied.<br />
+	Initializes a webvtt parser instance with the arguments supplied.
+	<br /><br />
 **Code Example:**<br />
 ```C	
 	if( ( result = webvtt_create_parser( &cue, &error, (void *)input_file, &vtt ) ) != WEBVTT_SUCCESS ) {
@@ -72,19 +73,23 @@ void webvtt_delete_parser( webvtt_parser parser );
 **Description:**<br /><br />
 	Deletes the supplied webvtt_parser object.<br /><br />
 **Code Example:**
+```C
 	webvtt_parser vtt;
 			
 	/* Code that uses webvtt_parser Here */
 			
 	// clean up
 	**webvtt_delete_parser( vtt );**
-			
+```
+```C
 **webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );**
+```
 **Returns:** webvtt_status - status code of the webvtt parser <br />
 **Parameters:**<br /><br />
 **webvtt_parser** - instance of the webvtt_parser object. <br />
 **const void *buffer** - buffer of cue text to be parsed.<br />
 **webvtt_uint** - unsigned int length of the buffer of cue text. <br />
+<br />
 **Description:**<br /><br />
 Parses cuetext that is supplied in the buffer parameter.<br /><br />
 **Code Example:** <br />
@@ -102,9 +107,9 @@ webvtt_status webvtt_finish_parsing( webvtt_parser self );
 ```
 **Returns:** webvtt_status - status code of the webvtt parser<br />
 **Parameters:**<br /><br />
-**webvtt_parser** - instance of the webvtt_parser object.<br />
-**Description:**<br />
-Finishes parsing and cleans up the parse state stack<br />
+**webvtt_parser** - instance of the webvtt_parser object.<br /><br />
+**Description:**<br /><br />
+Finishes parsing and cleans up the parse state stack<br /><br />
 **Code Example:**<br />
 ```C
 			  do {
@@ -118,15 +123,71 @@ Finishes parsing and cleans up the parse state stack<br />
 	  webvtt_finish_parsing( vtt );
 ```
 ### WebVTT Cues
-        #### webvtt_status webvtt_create_cue( webvtt_cue **pcue );
-		#### Returns: webvtt_status
-		#### Parameters:
-			webvtt_cue - a cue object that represents a webvtt cue in a .vtt file.
-	    #### Description:
-		
-        void webvtt_ref_cue( webvtt_cue *cue );
-        void webvtt_release_cue( webvtt_cue **pcue );
-        int webvtt_validate_cue( webvtt_cue *cue );
+```C
+webvtt_status webvtt_create_cue( webvtt_cue **pcue );
+```
+**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Parameters:** <br /><br />
+**webvtt_cue** - a cue object that represents a webvtt cue in a .vtt file.<br />
+<br />
+**Description:** <br /><br />
+	initializes a supplied webvtt_cue instance.<br /><br />
+**Code Example:**<br />
+```C	
+webvtt_create_cue( &self->top->v.cue );
+```
+```C
+void webvtt_ref_cue( webvtt_cue *cue );
+```
+**Returns:** void
+**Parameters:** <br />
+<br />
+**webvtt_cue** - a cue object that represents a webvtt cue in a .vtt file.<br />
+<br />
+**Description:** <br /><br />
+Adds the supplied webvtt_cue reference to the reference count of webvtt_cue instances. Manages the lifetime of the webvtt_cue object.
+	<br /><br />
+**Code Example:**<br />
+```C	
+Cue( webvtt_cue *pcue ) {
+    webvtt_ref_cue(pcue);
+    cue = pcue;
+  }
+```		
+```C
+void webvtt_release_cue( webvtt_cue **pcue );
+```
+**Returns:** void <br />
+**Parameters:** <br /><br />
+**webvtt_cue** - a cue object that represents a webvtt cue in a .vtt file.<br />
+<br />
+**Description:** <br /><br />
+Releases supplied cue instance from internel memory and increases cue reference count.
+	<br /><br />
+**Code Example:**<br />
+```C	
+Cue cue(pcue);
+  /**
+   * Cue object increases the reference count of pcue, so we can dereference it
+   */
+  webvtt_release_cue( &pcue );
+```      
+
+```C
+int webvtt_validate_cue( webvtt_cue *cue );
+```
+**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Parameters:** <br /><br />
+	**webvtt_cue** - a cue object that represents a webvtt cue in a .vtt file.<br />
+<br />
+**Description:** <br /><br />
+Validates a cue. If valid, notifies the application that a cue has been read.
+	<br /><br />
+**Code Example:**<br />
+```C	
+
+```    
+        
 
 ### WebVTT Nodes
         void webvtt_init_node( webvtt_node **node );
