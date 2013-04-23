@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+#encoding: utf-8
+
+import os
+
+def configure(ctx):
+	pass
+
+def build(ctx):
+	# Recurse into subdirectories containing a wscript
+	cwd=ctx.path.abspath()
+	dirs=[os.path.join(cwd,x) for x in os.listdir(cwd)
+				if os.path.isdir(os.path.join(cwd,x))
+				and os.path.isfile(os.path.join(cwd,x,'wscript'))]
+	ctx.recurse(dirs)
+	pass

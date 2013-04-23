@@ -1,0 +1,22 @@
+# Usage:
+# Comments begin with '#' (Empty lines are ignored)
+# Lines not prefixed with '!' are tools to import.
+# Tools can be full-paths or names (for the --tools=... argument)
+# Multiple tools can be specified on a single line, but should not
+# end with a comma (Commas are automatically inserted by update-waf.sh)
+#
+# If a prelude is needed, it can be specified
+# here by prefixing the appropriate line with '!'
+# eg:
+#!	from waflib.extras import foo
+#!	foo.func()
+#
+
+#Tools
+msvs        # Visual Studio project generation
+xcode       # XCode project generation
+make        # Makefile project generation
+eclipse     # Eclipse project generation
+batched_cc  # Batched compilation
+gccdeps     # GCC Dependencies
+win32_opts  # Win32 options

@@ -1,0 +1,92 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
+import sys, os, re
+from waflib import Logs
+from waflib.Build import BuildContext
+from waflib.Tools import waf_unit_test
+
+def check(ctx):
+	if not isinstance(ctx,BuildContext):
+		pass
+	build(ctx)
+
+def build(ctx):
+	gtest_main=os.path.join(ctx.path.parent.abspath(),'gtest','gtest-main.cc')
+	inc=os.path.join(ctx.path.parent.parent.abspath(),'src')
+	def test_name(f):
+		base=os.path.splitext(os.path.basename(f))[0]
+		return base
+	def build_test(ctx,src):
+		use=['gtest','webvttxx','coverage','profiler','pthread']
+		features=['cxx','cxxprogram']
+		name=test_name(src)
+		if ctx.cmd in ['check']: features.append('test')
+		ctx.program(source=[src],
+								target=name,
+								includes=inc,
+								use=use,
+								ut_cwd=ctx.path.abspath(),
+								features=features)
+	ptn = re.compile('(?P<prefix>\[\s*(?P<type>\w+|=+|-+)\s*\])\s+(?P<info>.*)')
+	def colourify(ctx):
+		lst = getattr(ctx, 'utest_results', [])
+		_cols = {
+			'==========' : 'GREEN',
+			'----------': 'GREEN',
+			'RUN' : 'GREEN',
+			'OK' : 'GREEN',
+			'PASSED' : 'GREEN',
+			'FAILED' : 'RED'
+		}
+		if lst:
+			show = ctx.options.show_all
+			passed=0
+			failed=0
+			Logs.pprint('GREEN',"\n[==========]", label="Running %d tests" % len(lst))
+			for (f, code, out, err) in lst:
+				col=''
+				if code==0:
+					st = '[  PASSED  ]'
+					col='GREEN'
+					passed+=1
+				else:
+					st='[  FAILED  ]'
+					col='RED'
+					failed+=1
+				if show:
+					Logs.pprint( 'CYAN' , '\nRunning tests from: %s' % f )
+					for l in out.splitlines(False):
+						m = re.match(ptn, l)
+						if m:
+							md = m.groupdict()
+							Logs.pprint(_cols.get( md['type'], 'NORMAL'),
+										md['prefix'], label=md['info'])
+						else:
+							Logs.pprint('NORMAL', l)
+				Logs.pprint(col,st, label=test_name(f))
+			if show: Logs.pprint('GREEN','[==========]\n')
+
+			colour=''
+			msg=''
+			prefix='[ PERFECT! ]'
+			if failed==0:
+				colour='GREEN'
+				msg='Passed all tests'
+				prefix='[ PERFECT! ]'
+			elif passed==0:
+				colour='RED'
+				msg='Failed all tests'
+				prefix='[  DANGER  ]'
+			else:
+				colour='ORANGE'
+				prefix='[ WARNING! ]'
+				if( passed < failed ): colour='RED'
+				msg='Passed %d/%d tests' %(passed,passed+failed)
+			Logs.pprint(colour, prefix, label=msg)
+			st=0 if failed==0 else 1
+			sys.exit(st)
+	waf_unit_test.summary = colourify
+	src=ctx.get_sources(ctx.path.abspath())
+	for f in src: build_test(ctx,f)
+	ctx.add_post_fun(waf_unit_test.summary)

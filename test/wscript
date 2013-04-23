@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+#encoding: utf-8
+subdirs=['gtest','unit']
+
+def configure(ctx):
+	pass
+
+def build(ctx):
+	ctx.recurse(subdirs)

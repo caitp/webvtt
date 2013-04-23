@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+#encoding: utf-8
+
+def configure(ctx):
+	pass
+
+def build(ctx):
+	src=ctx.get_sources(ctx.path.abspath())
+	ctx.shlib(source=src,
+						target='webvtt',
+						name='webvtt',
+						includes='../../include',
+						export_includes='../../include',
+						features='c',
+						use='coverage profiler',
+						defines='WEBVTT_BUILD_LIBRARY=1')
+	ctx.stlib(source=src,
+						target='webvtt-static',
+						name='webvtt-static',
+						includes='../../include',
+						export_includes='../../include',
+						features='c',
+						use='coverage profiler',
+						defines='WEBVTT_STATIC=1',
+            export_defines='WEBVTT_STATIC=1')
+

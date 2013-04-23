@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+#encoding: utf-8
+
+def configure(ctx):
+	pass
+
+def build(ctx):
+	ctx.recurse(['libwebvtt','libwebvttxx'])
+
