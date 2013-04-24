@@ -18,7 +18,7 @@ def build(ctx):
 		base=os.path.splitext(os.path.basename(f))[0]
 		return base
 	def build_test(ctx,src):
-		use=['gtest','webvttxx','coverage','profiler','pthread']
+		use=['gtest','webvttxx-static','coverage','profiler','pthread']
 		features=['cxx','cxxprogram']
 		name=test_name(src)
 		if ctx.cmd in ['check']: features.append('test')
@@ -55,7 +55,7 @@ def build(ctx):
 					col='RED'
 					failed+=1
 				if show:
-					Logs.pprint( 'CYAN' , '\nRunning tests from: %s' % f )
+					Logs.pprint( 'CYAN' , '\nRunning tests from: %s' % os.path.basename(f) )
 					for l in out.splitlines(False):
 						m = re.match(ptn, l)
 						if m:

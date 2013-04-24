@@ -63,8 +63,8 @@ def configure(ctx):
 	ctx.setenv(V,ctx.env.derive())
 	ctx.variant=V
 
-	ctx.warn_all() # Try to enable reporting all warnings
-	ctx.warn_extra() # Try to enable reporting extra warnings
+	ctx.warn_all(uselib_store='warnall') # Try to enable reporting all warnings
+	ctx.warn_extra(uselib_store='warnall') # Try to enable reporting extra warnings
 	ctx.decl_after_stmt(error=True) # Try to make declaration-after-statement an error
 
 	if ctx.env.CXX_NAME is 'msvc':

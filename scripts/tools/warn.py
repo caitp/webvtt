@@ -23,10 +23,13 @@ def configure(ctx):
 
 @conf
 def warn_all(ctx,*k,**kw):
+	suffix=''
 	if 'error' not in kw:
 		kw['error']=False
-	if not ctx.env['CFLAGS']: ctx.env['CFLAGS']=[]
-	if not ctx.env['CXXFLAGS']: ctx.env['CXXFLAGS']=[]
+	if 'uselib_store' in kw:
+		suffix='_%s'%kw['uselib_store']
+	if not ctx.env['CFLAGS'+suffix]: ctx.env['CFLAGS'+suffix]=[]
+	if not ctx.env['CXXFLAGS'+suffix]: ctx.env['CXXFLAGS'+suffix]=[]
 	ctx.start_msg('emit all warnings?')
 	flags=[]
 	st='no'
@@ -37,17 +40,20 @@ def warn_all(ctx,*k,**kw):
 	for f in flags:
 		if ctx.check(fragment=FLAGTEST,cflags=f,mandatory=False):
 			st='error' if kw['error'] else 'yes'
-			ctx.env['CFLAGS'].append(f)
-			ctx.env['CXXFLAGS'].append(f)
+			ctx.env['CFLAGS'+suffix].append(f)
+			ctx.env['CXXFLAGS'+suffix].append(f)
 			break
 	ctx.end_msg(st,'YELLOW')
 
 @conf
 def warn_extra(ctx,*k,**kw):
+	suffix=''
 	if 'error' not in kw:
 		kw['error']=False
-	if not ctx.env['CFLAGS']: ctx.env['CFLAGS']=[]
-	if not ctx.env['CXXFLAGS']: ctx.env['CXXFLAGS']=[]
+	if 'uselib_store' in kw:
+		suffix='_%s'%kw['uselib_store']
+	if not ctx.env['CFLAGS'+suffix]: ctx.env['CFLAGS'+suffix]=[]
+	if not ctx.env['CXXFLAGS'+suffix]: ctx.env['CXXFLAGS'+suffix]=[]
 	ctx.start_msg('emit extra warnings?')
 	flags=[]
 	st='no'
@@ -58,8 +64,8 @@ def warn_extra(ctx,*k,**kw):
 	for f in flags:
 		if ctx.check(fragment=FLAGTEST,cflags=f,mandatory=False):
 			st='error' if kw['error'] else 'yes'
-			ctx.env['CFLAGS'].append(f)
-			ctx.env['CXXFLAGS'].append(f)
+			ctx.env['CFLAGS'+suffix].append(f)
+			ctx.env['CXXFLAGS'+suffix].append(f)
 			break
 	ctx.end_msg(st,'YELLOW')
 
@@ -72,10 +78,12 @@ If requested, cause this warning to be treated as an error
 """
 @conf
 def decl_after_stmt(ctx,*k,**kw):
+	suffix=''
 	if 'error' not in kw:
 		kw['error']=False
-	if not ctx.env['CFLAGS']: ctx.env['CFLAGS']=[]
-	if not ctx.env['CXXFLAGS']: ctx.env['CXXFLAGS']=[]
+	if 'uselib_store' in kw:
+		suffix='_%s'%kw['uselib_store']
+	if not ctx.env['CFLAGS'+suffix]: ctx.env['CFLAGS'+suffix]=[]
 	ctx.start_msg('warn on declaration-after-statement?')
 	flags=[]
 	st='no'
@@ -86,7 +94,7 @@ def decl_after_stmt(ctx,*k,**kw):
 	for f in flags:
 		if ctx.check(fragment=FLAGTEST,cflags=f,mandatory=False):
 			st='error' if kw['error'] else 'yes'
-			ctx.env['CFLAGS'].append(f)
-			ctx.env['CXXFLAGS'].append(f)
+			ctx.env['CFLAGS'+suffix].append(f)
 			break
 	ctx.end_msg(st,'YELLOW')
+
