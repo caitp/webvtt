@@ -46,12 +46,13 @@ When running tests with valgrind, any test that fails valgrind (even if it passe
 ```C
 webvtt_status webvtt_create_parser(webvtt_cue_fn on_read, webvtt_error_fn on_error, void* userdata, webvtt_parser *ppout );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_cue_fn** - pointer to function used to read cue.<br />
 	**webvtt_error_fn** - pointer to function used for error handling.<br />
 	**void* userdata** - pointer to an input file that constains the user data to parse.<br />
 	**webvtt_parser** - instance of the webvtt_parser object.<br />
+	<br />
 **Description:** <br /><br />
 	Initializes a webvtt parser instance with the arguments supplied.
 	<br /><br />
@@ -67,9 +68,10 @@ webvtt_status webvtt_create_parser(webvtt_cue_fn on_read, webvtt_error_fn on_err
 ```C
 void webvtt_delete_parser( webvtt_parser parser );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser<br />
+**Returns:** webvtt_status - status code of the webvtt parser<br /><br />
 **Parameters:**<br /><br />
 	**webvtt_parser parser** - instance of the webvtt_parser object.<br />
+	<br />
 **Description:**<br /><br />
 	Deletes the supplied webvtt_parser object.<br /><br />
 **Code Example:**
@@ -79,12 +81,12 @@ void webvtt_delete_parser( webvtt_parser parser );
 	/* Code that uses webvtt_parser Here */
 			
 	// clean up
-	**webvtt_delete_parser( vtt );**
+	webvtt_delete_parser( vtt );
 ```
 ```C
-**webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );**
+webvtt_status webvtt_parse_chunk( webvtt_parser self, const void *buffer, webvtt_uint len );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:**<br /><br />
 	**webvtt_parser self** - instance of the webvtt_parser object. <br />
 	**const void *buffer** - buffer of cue text to be parsed.<br />
@@ -105,7 +107,7 @@ Parses cuetext that is supplied in the buffer parameter.<br /><br />
 ```C
 webvtt_status webvtt_finish_parsing( webvtt_parser self );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser<br />
+**Returns:** webvtt_status - status code of the webvtt parser<br /><br />
 **Parameters:**<br /><br />
 	**webvtt_parser self** - instance of the webvtt_parser object.<br /><br />
 **Description:**<br /><br />
@@ -126,7 +128,7 @@ Finishes parsing and cleans up the parse state stack<br /><br />
 ```C
 webvtt_status webvtt_create_cue( webvtt_cue **pcue );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_cue **pcue** - a cue object that represents a webvtt cue in a .vtt file.<br />
 <br />
@@ -139,10 +141,10 @@ webvtt_create_cue( &self->top->v.cue );
 ```C
 void webvtt_ref_cue( webvtt_cue *cue );
 ```
-**Returns:** void
+**Returns:** void<br /><br />
 **Parameters:** <br />
 <br />
-	**webvtt_cue** - a cue object that represents a webvtt cue in a .vtt file.<br />
+	**webvtt_cue cue** - a cue object that represents a webvtt cue in a .vtt file.<br />
 <br />
 **Description:** <br /><br />
 Adds the supplied webvtt_cue reference to the reference count of webvtt_cue instances. Manages the lifetime of the webvtt_cue object.
@@ -157,7 +159,7 @@ Cue( webvtt_cue *pcue ) {
 ```C
 void webvtt_release_cue( webvtt_cue **pcue );
 ```
-**Returns:** void <br />
+**Returns:** void <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_cue **pcue** - a cue object that represents a webvtt cue in a .vtt file.<br />
 <br />
@@ -176,7 +178,7 @@ Cue cue(pcue);
 ```C
 int webvtt_validate_cue( webvtt_cue *cue );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_cue *cue** - a cue object that represents a webvtt cue in a .vtt file.<br />
 <br />
@@ -201,7 +203,7 @@ if( cue ) {
 ```C
  void webvtt_init_node( webvtt_node **node );
 ```
-**Returns:** void <br />
+**Returns:** void <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_node **node** - pointer to webvtt_node type.<br />
 <br />
@@ -218,11 +220,11 @@ webvtt_init_node(node);
 ```C
 void webvtt_ref_node( webvtt_node *node );
 ```
-**Returns:** void<br />
+**Returns:** void<br /><br />
 **Parameters:** <br /><br />
-	**webvtt_node *node ** - represents a webvtt node object <br />
+	**webvtt_node node** - represents a webvtt node object <br />
 <br />
-**Description:** <br /><br />
+**Description:**<br /><br />
 Adds the supplied webvtt_node reference and increments the reference count of the nodes managed.
 	<br /><br />
 **Code Example:**<br />
@@ -238,7 +240,7 @@ if( *node != &empty_node ) {
 ```C
 void webvtt_release_node( webvtt_node **node );
 ```
-**Returns:** void <br />
+**Returns:** void <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_node node** - represents a webvtt node object<br />
 <br />
@@ -262,9 +264,9 @@ Un-tracks the webvtt_node and decrements the reference count.
 ```C
 void webvtt_init_string( webvtt_string *result );
 ```
-**Returns:** void<br />
+**Returns:** void<br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *result ** - a character string used in webvtt files<br />
+	**webvtt_string result** - a character string used in webvtt files<br />
 <br />
 **Description:** <br /><br />
 Initializes supplied webvtt_string reference.
@@ -278,7 +280,7 @@ webvtt_string temp_annotation;
 ```C
 webvtt_status webvtt_create_string( webvtt_uint32 alloc, webvtt_string *result );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_uint32 alloc** - 32-bit webvtt unsigned int type.<br />
 	**webvtt_string *result** - character string type referenced used in webvtt files. <br />
@@ -295,10 +297,10 @@ if(WEBVTT_FAILED(webvtt_create_string( 0x100, str ))) {
 ```C
 webvtt_status webvtt_create_string_with_text( webvtt_string *result, const char *init_text, int len );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_string** - character string type referenced used in webvtt files.<br />
-	**const char* init_text ** - the initialization text.
+	**const char init_text ** - the initialization text.
 	**int** - The length of the initialization text.
 <br />
 **Description:** <br /><br />
@@ -318,9 +320,9 @@ Creates a webvtt string supplied in result. Appends text supplied by init_text w
 ```C
 void webvtt_ref_string( webvtt_string *str );
 ```
-**Returns:** void <br />
+**Returns:** void <br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *str** - character string type referenced used in webvtt files.<br />
+	**webvtt_string str** - character string type referenced used in webvtt files.<br />
 <br />
 **Description:** <br /><br />
 Adds webvtt string reference supplied in *str. Increases reference count.
@@ -336,9 +338,9 @@ if(WEBVTT_FAILED(webvtt_create_string( 0x100, str ))) {
 ```C
 void webvtt_release_string( webvtt_string *str );
 ```
-**Returns:** void <br />
+**Returns:** void <br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *str ** - character string type referenced used in webvtt files.<br />
+	**webvtt_string str ** - character string type referenced used in webvtt files.<br />
 <br />
 **Description:** <br /><br />
 Releases webvtt_string referenced by *str and decrements reference count.
@@ -353,9 +355,9 @@ if( self->line_buffer.d->length == 0 ) {
 ```C
 webvtt_status webvtt_string_detach( webvtt_string *str );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *str ** - character string type referenced used in webvtt files.<br />
+	**webvtt_string str ** - character string type referenced used in webvtt files.<br />
 <br />
 **Description:** <br /><br />
 Detached a webvtt_string supplied by *str so that it can be safely mutable.
@@ -378,10 +380,10 @@ if( WEBVTT_FAILED( status = webvtt_create_string_with_text( &str,
 ```C
  void webvtt_copy_string( webvtt_string *destination, const webvtt_string *source );
 ```
-**Returns:**void <br />
+**Returns:**void <br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *destination ** - character string type referenced used in webvtt files.<br />
-	**webvtt_string *source ** - character string type referenced used in webvtt files.<br />
+	**webvtt_string destination ** - character string type referenced used in webvtt files.<br />
+	**webvtt_string source ** - character string type referenced used in webvtt files.<br />
 <br />
 **Description:** <br /><br />
 Copies the supplied webvtt_string pointed by *source to the supplied *destination webvtt_string.
@@ -397,9 +399,9 @@ finished = 1;
 ```C
 webvtt_uint webvtt_string_is_empty( const webvtt_string *str );
 ```
-**Returns:** webvtt_uint - unsigned int 0 if empty and 1 if not. <br />
+**Returns:** webvtt_uint - unsigned int 0 if empty and 1 if not. <br /><br />
 **Parameters:** <br /><br />
-	**const webvtt_string *str ** - constant character string type referenced used in webvtt files.<br />
+	**const webvtt_string str ** - constant character string type referenced used in webvtt files.<br />
 <br />
 **Description:** <br /><br />
 Determines if constant webvtt_string supplied in *str is empty. Returns 0 if empty 1 otherwise.
@@ -415,9 +417,9 @@ else
 ```C
 const char *webvtt_string_text( const webvtt_string *str );
 ```
-**Returns:** const char* - 0 if empty or string referenced in 'str->d->text' <br />
+**Returns:** const char* - 0 if empty or string referenced in 'str->d->text' <br /><br />
 **Parameters:** <br /><br />
-	**const webvtt_string *str ** - constant character string type referenced used in webvtt files.<br />
+	**const webvtt_string str** - constant character string type referenced used in webvtt files.<br />
 <br />
 **Description:** <br /><br />
 Getter that returns the const char* C-string stored within the supplied webvtt_string in *str.
@@ -433,9 +435,9 @@ text = webvtt_string_text( line );
 ```C
 webvtt_uint32 webvtt_string_length( const webvtt_string *str );
 ```
-**Returns:** webvtt_uint32 - webvtt unsigned int 32-bit representation of webvtt string length<br />
+**Returns:** webvtt_uint32 - webvtt unsigned int 32-bit representation of webvtt string length<br /><br />
 **Parameters:** <br /><br />
-	**const webvtt_string *str ** - constant character string type referenced used in webvtt files.<br />
+	**const webvtt_string str** - constant character string type referenced used in webvtt files.<br />
 <br />
 **Description:** <br /><br />
 Returns the string length in the form of a 32 bit webvtt unsigned integer of the webvtt string supplied in *str.
@@ -457,9 +459,9 @@ if( self->line_buffer.d->length == 0 ) {
 ```C
 webvtt_uint32 webvtt_string_capacity( const webvtt_string *str );
 ```
-**Returns:** webvtt_uint32 - webvtt unsigned int 32-bit representation of webvtt string length<br />
+**Returns:** webvtt_uint32 - webvtt unsigned int 32-bit representation of webvtt string length<br /><br />
 **Parameters:** <br /><br />
-	**const webvtt_string *str ** - constant character string type referenced used in webvtt files.<br />
+	**const webvtt_string str** - constant character string type referenced used in webvtt files.<br />
 <br />
 **Description:** <br /><br />
 Getter which returns the capacity in the supplied constant webvtt string supplied in str. Returns 0 if empty.
@@ -475,11 +477,11 @@ if (alloc != 0)
 ```C
 int webvtt_string_getline( webvtt_string *str, const char *buffer, webvtt_uint *pos, int len, int *truncate, webvtt_bool finish );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *str ** -  character string type referenced used in webvtt files.<br />
+	**webvtt_string str ** -  character string type referenced used in webvtt files.<br />
 	**const char* buffer** - C-String buffer to store a line of text.<br />
-	**webvtt_uint *pos** - webvtt unsigned integer reference which stores character position in buffer.<br />
+	**webvtt_uint pos** - webvtt unsigned integer reference which stores character position in buffer.<br />
 	**int len** - length in integer of buffer.<br />
 	**int *truncate** - The integer reference of the position to which the buffer is truncated for overflow management.<br />
 	**webvtt_bool** - webvtt boolean variable.<br />
@@ -523,9 +525,9 @@ Gets a C String line from the buffer and stores it in *src. It also updates the 
 ```C
 webvtt_status webvtt_string_putc( webvtt_string *str, char to_append );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *str ** - character string type referenced used in webvtt files.<br />
+	**webvtt_string str ** - character string type referenced used in webvtt files.<br />
 	**char to_append** - character to append to webvtt_string reference.<br />
 <br />
 **Description:** <br /><br />
@@ -545,10 +547,10 @@ if( v < 0 || WEBVTT_FAILED( webvtt_string_putc( &self->line_buffer,
 ```C
 webvtt_bool webvtt_string_is_equal( const webvtt_string *str, const char *to_compare, int len );
 ```
-**Returns:** webvtt_bool - a boolean value <br />
+**Returns:** webvtt_bool - a boolean value <br /><br />
 **Parameters:** <br /><br />
-	**const webvtt_string *str ** - constant character string type referenced used in webvtt files.<br />
-	**const char *to_compare** - a C-String that holds the string to be compared <br />
+	**const webvtt_string str ** - constant character string type referenced used in webvtt files.<br />
+	**const char to_compare** - a C-String that holds the string to be compared <br />
 	**int len** - The length of the string <br />
 <br />
 **Description:** <br /><br />
@@ -568,10 +570,10 @@ else
 ```C
 webvtt_status webvtt_string_append( webvtt_string *str, const char *buffer, int len );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *str ** - character string type referenced used in webvtt files.<br />
-	**const char *buffer** - C-style string buffer to be appended to string *str.<br />
+	**webvtt_string str ** - character string type referenced used in webvtt files.<br />
+	**const char buffer** - C-style string buffer to be appended to string *str.<br />
 <br />
 **Description:** <br /><br />
 <p>
@@ -589,10 +591,10 @@ if( WEBVTT_FAILED( webvtt_string_append( &cue->id, text,length ) ) ) {
 ```C
 webvtt_status webvtt_string_append_string( webvtt_string *str, const webvtt_string *other );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
-	**webvtt_string *str ** - character string type referenced used in webvtt files.<br />
-	**const webvtt_string *other** - a constant webvtt_string to be appended to *str <br />
+	**webvtt_string str ** - character string type referenced used in webvtt files.<br />
+	**const webvtt_string other** - a constant webvtt_string to be appended to *str <br />
 <br />
 **Description:** <br /><br />
 <p>
@@ -610,7 +612,7 @@ webvtt_string_append_string( &cue->body, &self->line_buffer );
 ```C
 webvtt_bool webvtt_next_utf8( const char **begin, const char *end );
 ```
-**Returns:** webvtt_status - status code of the webvtt parser <br />
+**Returns:** webvtt_status - status code of the webvtt parser <br /><br />
 **Parameters:** <br /><br />
 	**webvtt_cue_fn** - pointer to function used to read cue.<br />
 <br />
