@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 import sys, os, re
-from waflib import Logs
+from waflib import Logs, Options, Utils
 from waflib.Build import BuildContext
 from waflib.Tools import waf_unit_test
 
@@ -21,6 +21,19 @@ def build(ctx):
 		use=['gtest','webvttxx-static','coverage','profiler','pthread']
 		features=['cxx','cxxprogram']
 		name=test_name(src)
+		testcmd=getattr(Options.options,'testcmd',False)
+		if ctx.options.valgrind and not testcmd:
+				testcmd=('valgrind -q --leak-check=full --track-origins=yes ' +
+					'--num-callers=50 --error-exitcode=1 ')
+				if ctx.env.HOST_OS is 'darwin':
+					testcmd += ('--dsymutil=yes '
+											if 'darwin' in Utils.unversioned_sys_platform()
+											else '--read-var-info=yes ')
+				testcmd += '%s'
+				Options.options.testcmd=testcmd
+		else:
+			ctx.options.valgrind=False
+		Options.options.valgrind=ctx.options.valgrind
 		if ctx.cmd in ['check']: features.append('test')
 		ctx.program(source=[src],
 								target=name,
@@ -56,7 +69,11 @@ def build(ctx):
 					failed+=1
 				if show:
 					Logs.pprint( 'CYAN' , '\nRunning tests from: %s' % os.path.basename(f) )
-					for l in out.splitlines(False):
+					lines=out.splitlines(False)
+					if err:
+						lines.append('\n')
+						lines.extend(err.splitlines(False))
+					for l in lines:
 						m = re.match(ptn, l)
 						if m:
 							md = m.groupdict()

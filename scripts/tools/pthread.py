@@ -129,10 +129,5 @@ def check_pthread(ctx,*k,**kw):
 			if not ctx.check(fragment=PTHREAD_SIMPLE,use='pthread',mandatory=False):
 				ctx.env.append_unique('LINKFLAGS_pthread','-pthread')
 
-	if 'CFLAGS_pthread' in ctx.env:
-		ctx.env['CXXFLAGS_pthread']=ctx.env['CFLAGS_pthread']
-		have_pthread=' '.join(ctx.env['CFLAGS_pthread'])
-		if 'LINKFLAGS_pthread' in ctx.env:
-			have_pthread += ' %s'%' '.join(ctx.env['LINKFLAGS_pthread'])
 	ctx.end_msg(have_pthread,'RED' if have_pthread is 'no' else 'GREEN')
 

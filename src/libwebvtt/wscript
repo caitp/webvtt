@@ -11,16 +11,16 @@ def build(ctx):
 						name='webvtt',
 						includes='../../include',
 						export_includes='../../include',
-						features='c warnall',
-						use='coverage profiler',
+						features='c',
+						use='coverage profiler warnall',
 						defines='WEBVTT_BUILD_LIBRARY=1')
 	ctx.stlib(source=src,
 						target='webvtt-static',
 						name='webvtt-static',
 						includes='../../include',
 						export_includes='../../include',
-						features='c warnall',
-						use='coverage profiler',
+						features='c',
+						use='coverage profiler warnall',
 						defines='WEBVTT_STATIC=1',
             export_defines='WEBVTT_STATIC=1')
 

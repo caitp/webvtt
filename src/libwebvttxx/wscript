@@ -11,8 +11,8 @@ def build(ctx):
 						name='webvttxx',
 						includes='../../include',
 						export_includes='../../include',
-						features='cxx warnall',
-						use='webvtt coverage profiler',
+						features='cxx',
+						use='webvtt coverage profiler warnall',
 						defines='WEBVTT_BUILD_LIBRARY=1')
 
 	ctx.stlib(source=src,
@@ -20,7 +20,7 @@ def build(ctx):
 						name='webvttxx-static',
 						includes='../../include',
 						export_includes='../../include',
-						features='cxx warnall',
-						use='webvtt-static coverage profiler',
+						features='cxx',
+						use='webvtt-static coverage profiler warnall',
 						defines='WEBVTT_STATIC=1')
 

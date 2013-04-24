@@ -34,6 +34,8 @@ def options(ctx):
 	g.add_option('--debug',dest='debug', default=False,
 								action='store_true',
 								help='Build with debug symbols')
+	g.add_option('--enable-valgrind',dest='valgrind', default=False,
+								action='store_true', help='Run tests through Valgrind')
 
 @conf
 def get_sources(ctx,path,skip=[]):
@@ -63,8 +65,8 @@ def configure(ctx):
 	ctx.setenv(V,ctx.env.derive())
 	ctx.variant=V
 
-	ctx.warn_all(uselib_store='warnall') # Try to enable reporting all warnings
-	ctx.warn_extra(uselib_store='warnall') # Try to enable reporting extra warnings
+	ctx.warn_all(lang='c') # Try to enable reporting all warnings
+	ctx.warn_extra(lang='c') # Try to enable reporting extra warnings
 	ctx.decl_after_stmt(error=True) # Try to make declaration-after-statement an error
 
 	if ctx.env.CXX_NAME is 'msvc':

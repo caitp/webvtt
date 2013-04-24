@@ -1,4 +1,15 @@
+# Generated Waf files
 /.waf-*
 /build
 *.pyc
 .lock-*
+
+# Backups
+*~
+*.swp
+
+# MSVC related files
+*.sln
+*.vcproj
+*.vcxproj
+*.suo
