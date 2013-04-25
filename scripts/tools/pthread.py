@@ -3,6 +3,7 @@
 
 from os import environ
 from waflib.Configure import conf
+from waflib.ConfigSet import ConfigSet
 
 PTHREAD_SIMPLE="""
 #include <pthread.h>
@@ -40,6 +41,16 @@ def check_pthread(ctx,*k,**kw):
 	envlibs=environ.get('PTHREAD_LIBS',None)
 	envflags=environ.get('PTHREAD_CFLAGS',None)
 	ret=None
+	def addenv(name,val):
+		if (isinstance(ctx.env,list) or isinstance(ctx.env,dict)):
+			#If it's a list
+			if not ctx.env[name]: ctx.env[name]=[]
+			elif val in ctx.env[name]: pass
+			else: ctx.env[name]=val
+		elif isinstance(ctx.env,ConfigSet):
+			#If it's a waf ConfigSet:
+			ctx.env.append_unique(name,val)
+
 	# If the user has set any of the PTHREAD_LIBS, etcetera environment
 	# variables, and if threads linking works using them:
 	if (envlibs or envflags):
@@ -92,9 +103,9 @@ def check_pthread(ctx,*k,**kw):
 			ret=ctx.check(linkflags=lf,mandatory=False,use='pthread')
 		if ret:
 			have_pthread='yes'
-			if cf: ctx.env.append_unique('CFLAGS_pthread',cf)
-			if cf: ctx.env.append_unique('CXXFLAGS_pthread',cf)
-			if lf: ctx.env.append_unique('LINKFLAGS_pthread',lf)
+			if cf: addenv('CFLAGS_pthread',cf)
+			if cf: addenv('CXXFLAGS_pthread',cf)
+			if lf: addenv('LINKFLAGS_pthread',lf)
 			break
 
 	# Various other checks:
@@ -108,7 +119,7 @@ def check_pthread(ctx,*k,**kw):
 		# If we have a non-standard name for PTHREAD_CREATE_JOINABLE
 		# Store the nonstandard flag in the configuration header.
 		if attr_name is not 'PTHREAD_CREATE_JOINABLE':
-			ctx.env.append_unique('CPPFLAGS_pthread','-DPTHREAD_CREATE_JOINABLE=%s'%attr)
+			addenv('CPPFLAGS_pthread','-DPTHREAD_CREATE_JOINABLE=%s'%attr)
 
 		flag=None
 		if ctx.env.DEST_OS in ['aix','freebsd','darwin']:
@@ -116,7 +127,7 @@ def check_pthread(ctx,*k,**kw):
 		elif ctx.env.DEST_OS in ['sunos','hpux']:
 			flag='-D_REENTRANT'
 		if flag is not None:
-			ctx.env.append_unqiue('CPPFLAGS_pthread',flag)
+			addenv('CPPFLAGS_pthread',flag)
 
 		# More AIX lossage: must compile with xlc_r or cc_r
 		if ctx.env.DEST_OS in ['aix']:
@@ -127,7 +138,7 @@ def check_pthread(ctx,*k,**kw):
 		if ('-pthread' in ctx.env['CFLAGS_pthread']
 				and '-pthread' not in ctx.env['LINKFLAGS_pthread']):
 			if not ctx.check(fragment=PTHREAD_SIMPLE,use='pthread',mandatory=False):
-				ctx.env.append_unique('LINKFLAGS_pthread','-pthread')
+				addenv('LINKFLAGS_pthread','-pthread')
 
 	ctx.end_msg(have_pthread,'RED' if have_pthread is 'no' else 'GREEN')
 
