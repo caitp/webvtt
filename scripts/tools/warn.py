@@ -39,6 +39,8 @@ def test_wflags(ctx,*k,**kw):
 	suffix=''
 	lang=['C','CXX']
 	flags=[]
+	if 'all' not in kw:
+		kw['all']=False
 	x['msg']=x['okmsg']=x['errmsg']=''
 	x['mandatory']=False
 	if 'error' not in kw:
@@ -75,7 +77,8 @@ def test_wflags(ctx,*k,**kw):
 			ret=ctx.check(**x)
 			if ret:
 				msg='yes'
-				have=True
+				if not kw['all']:
+					have=True
 			ctx.end_msg(msg,'GREEN' if msg is 'yes' else 'YELLOW')
 		if have: break
 
@@ -139,4 +142,5 @@ def ignore_warning(ctx,*k,**kw):
 		del kw['warning']
 	if 'flags' not in kw:
 		return
+	kw['all']=True
 	ctx.test_wflags(**kw)

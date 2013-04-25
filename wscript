@@ -5,7 +5,7 @@ from waflib.Build import BuildContext, CleanContext
 from waflib.Build import InstallContext, UninstallContext
 from waflib.extras.msvs import msvs_generator, msvs_2008_generator
 from waflib.Utils import unversioned_sys_platform
-from waflib import Logs, Options, Context, Node
+from waflib import Logs, Options, Context, Node, Task
 from waflib.TaskGen import after
 
 APPNAME='webvtt'
@@ -69,7 +69,7 @@ def configure(ctx):
 	ctx.warn_extra(lang='c') # Try to enable reporting extra warnings
 	ctx.decl_after_stmt(error=True) # Try to make declaration-after-statement an error
 	#Disable some silly MSVC warnings:
-	ctx.ignore_warning(flags='/wd4820 /wd4996 /wd4267')
+	ctx.ignore_warning(flags='/wd4820 /wd4996 /wd4267 /wd4127 /wd4668')
 
 	if ctx.env.CXX_NAME is 'msvc':
 		# Can disable extensions (in MSVC) with by uncommenting here
@@ -116,5 +116,23 @@ def set_variant(V):
 			variant=V
 
 def init(ctx):
+	def quiet_task_print(self):
+		env=self.env
+		#src_str=' '.join([a.nice_path()for a in self.inputs])
+		#tgt_str=' '.join([a.nice_path()for a in self.outputs])
+		name=None
+		task=self.__class__.__name__.replace('_task','')
+		#Silent tasks
+		if task in ['utest']: return ''
+		elif task in ['c','cxx']:
+			task='compiling'
+			name=self.inputs[0]
+		elif task.endswith('program') or task.endswith('lib'):
+			task='linking'
+			name=self.outputs[0]
+		else: return ''
+		return'%s: %s\n'%(task,name)
+	if not ctx.options.verbose:
+		Task.Task.__str__=quiet_task_print
 	try: set_variant(Context.variant)
 	except: pass
