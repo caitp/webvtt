@@ -6,14 +6,14 @@ def configure(ctx):
 
 def build(ctx):
 	src=ctx.get_sources(ctx.path.abspath())
-	ctx.shlib(source=src,
-						target='webvttxx',
-						name='webvttxx',
-						includes='../../include',
-						export_includes='../../include',
-						features='cxx',
-						use='webvtt coverage profiler warnall',
-						defines='WEBVTT_BUILD_LIBRARY=1')
+	#ctx.shlib(source=src,
+	#					target='webvttxx',
+	#					name='webvttxx',
+	#					includes='../../include',
+	#					export_includes='../../include',
+	#					features='cxx',
+	#					use='coverage profiler',
+	#					defines='WEBVTT_BUILD_LIBRARY=1')
 
 	ctx.stlib(source=src,
 						target='webvttxx-static',
@@ -21,6 +21,6 @@ def build(ctx):
 						includes='../../include',
 						export_includes='../../include',
 						features='cxx',
-						use='webvtt-static coverage profiler warnall',
+						use='coverage profiler',
 						defines='WEBVTT_STATIC=1')
 

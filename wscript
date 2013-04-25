@@ -68,6 +68,8 @@ def configure(ctx):
 	ctx.warn_all(lang='c') # Try to enable reporting all warnings
 	ctx.warn_extra(lang='c') # Try to enable reporting extra warnings
 	ctx.decl_after_stmt(error=True) # Try to make declaration-after-statement an error
+	#Disable some silly MSVC warnings:
+	ctx.ignore_warning(flags='/wd4820 /wd4996 /wd4267')
 
 	if ctx.env.CXX_NAME is 'msvc':
 		# Can disable extensions (in MSVC) with by uncommenting here

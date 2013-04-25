@@ -12,13 +12,13 @@ def check(ctx):
 	build(ctx)
 
 def build(ctx):
-	gtest_main=os.path.join(ctx.path.parent.abspath(),'gtest','gtest-main.cc')
+	gtest_main=os.path.join('..','gtest','gtest_main.cc')
 	inc=os.path.join(ctx.path.parent.parent.abspath(),'src')
 	def test_name(f):
 		base=os.path.splitext(os.path.basename(f))[0]
 		return base
 	def build_test(ctx,src):
-		use=['gtest','webvttxx-static','coverage','profiler','pthread']
+		use=['gtest','webvttxx-static','webvtt-static','coverage','profiler']
 		features=['cxx','cxxprogram']
 		name=test_name(src)
 		testcmd=getattr(Options.options,'testcmd',False)
@@ -35,7 +35,7 @@ def build(ctx):
 			ctx.options.valgrind=False
 		Options.options.valgrind=ctx.options.valgrind
 		if ctx.cmd in ['check']: features.append('test')
-		ctx.program(source=[src],
+		ctx.program(source=[src,gtest_main],
 								target=name,
 								includes=inc,
 								use=use,

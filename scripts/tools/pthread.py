@@ -34,7 +34,9 @@ def configure(ctx):
 def check_pthread(ctx,*k,**kw):
 	ctx.start_msg('Checking for pthread')
 	have_pthread='no'
-
+	if ctx.env['CC_NAME'] in ['msvc','msvc2008']:
+		ctx.end_msg('no')
+		return
 	envlibs=environ.get('PTHREAD_LIBS',None)
 	envflags=environ.get('PTHREAD_CFLAGS',None)
 	ret=None
@@ -85,11 +87,9 @@ def check_pthread(ctx,*k,**kw):
 			lf='-l%s'%f
 
 		if cf:
-			ret=ctx.check(cflags=cf, mandatory=False,use='pthread',
-										)
+			ret=ctx.check(cflags=cf, mandatory=False,use='pthread')
 		if lf:
-			ret=ctx.check(linkflags=lf,mandatory=False,use='pthread',
-										)
+			ret=ctx.check(linkflags=lf,mandatory=False,use='pthread')
 		if ret:
 			have_pthread='yes'
 			if cf: ctx.env.append_unique('CFLAGS_pthread',cf)
