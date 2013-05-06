@@ -32,22 +32,11 @@
 extern "C" {
 #endif
 
-# ifdef HAVE_CONFIG_H
-/**
- * Maybe this is a bad idea!
- *
- * But realistically, it's not likely to hurt anything.
- */
-#   include "config.h"
-# endif
-
 /**
  * Assuming that libc provides stdint.h unless we have a good reason to believe
  * it doesn't... MSVC does not ship stdint.h prior to MSVC2010.
- *
- * If config.h says we have stdint.h, trust it.
  */
-# if defined(HAVE_STDINT_H) || !defined(_MSC_VER) || _MSC_VER >= 1600
+# if !defined(_MSC_VER) || _MSC_VER >= 1600
 #   include <stdint.h>
 # endif
 
