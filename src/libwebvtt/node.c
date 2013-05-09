@@ -25,11 +25,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- #include <string.h>
- #include <stdlib.h>
- #include "node_internal.h"
+#include <string.h>
+#include <webvtt/node_list.h>
+#include "node_internal.h"
 
- static webvtt_node empty_node = {
+static webvtt_node empty_node = {
   { 1 }, /* init ref count */
   0, /* parent */
   WEBVTT_EMPTY_NODE, /* node kind */
@@ -100,9 +100,7 @@ webvtt_create_internal_node( webvtt_node **node, webvtt_node *parent,
 
   webvtt_copy_stringlist( &node_data->css_classes, css_classes );
   webvtt_copy_string( &node_data->annotation, annotation );
-  node_data->children = NULL;
-  node_data->length = 0;
-  node_data->alloc = 0;
+  webvtt_create_node_list( &node_data->node_list );
 
   (*node)->data.internal_data = node_data;
 
@@ -162,7 +160,6 @@ webvtt_create_text_node( webvtt_node **node, webvtt_node *parent,
 WEBVTT_EXPORT void
 webvtt_release_node( webvtt_node **node )
 {
-  webvtt_uint i;
   webvtt_node *n;
 
   if( !node || !*node ) {
@@ -177,10 +174,7 @@ webvtt_release_node( webvtt_node **node )
                n->data.internal_data ) {
       webvtt_release_stringlist( &n->data.internal_data->css_classes );
       webvtt_release_string( &n->data.internal_data->annotation );
-      for( i = 0; i < n->data.internal_data->length; i++ ) {
-        webvtt_release_node( n->data.internal_data->children + i );
-      }
-      webvtt_free( n->data.internal_data->children );
+      webvtt_release_node_list( &n->data.internal_data->node_list );
       webvtt_free( n->data.internal_data );
     }
     webvtt_free( n );
@@ -191,41 +185,9 @@ webvtt_release_node( webvtt_node **node )
 WEBVTT_INTERN webvtt_status
 webvtt_attach_node( webvtt_node *parent, webvtt_node *to_attach )
 {
-  webvtt_node **next = 0;
-  webvtt_internal_node_data *nd = 0;
-
-  if( !parent || !to_attach || !parent->data.internal_data ) {
+  if( !parent || !to_attach ) {
     return WEBVTT_INVALID_PARAM;
   }
-  nd = parent->data.internal_data;
-
-  if( nd->alloc == 0 ) {
-    next = (webvtt_node **)webvtt_alloc0( sizeof( webvtt_node * ) * 8 );
-
-    if( !next ) {
-      return WEBVTT_OUT_OF_MEMORY;
-    }
-
-    nd->children = next;
-    nd->alloc = 8;
-  }
-
-  if( nd->length + 1 >= ( nd->alloc / 3 ) * 2 ) {
-
-    next = (webvtt_node **)webvtt_alloc0( sizeof( *next ) * nd->alloc * 2 );
-
-    if( !next ) {
-      return WEBVTT_OUT_OF_MEMORY;
-    }
-
-    nd->alloc *= 2;
-    memcpy( next, nd->children, nd->length * sizeof( webvtt_node * ) );
-    webvtt_free( nd->children );
-    nd->children = next;
-  }
-
-  nd->children[ nd->length++ ] = to_attach;
-  webvtt_ref_node( to_attach );
-
-  return WEBVTT_SUCCESS;
+  return webvtt_node_list_push( parent->data.internal_data->node_list,
+                                to_attach );
 }

@@ -30,6 +30,7 @@
 
 # include <stdexcept>
 # include <webvtt/node.h>
+# include <webvtt/node_list.h>
 # include "string"
 # include "timestamp"
 
@@ -71,7 +72,7 @@ public:
 
   bool isEmpty() const { return kind() == Empty; }
   NodeKind kind() const { return (NodeKind)node->kind; }
-  int childCount() const { return node->data.internal_data->length; }
+  int childCount() const { return node->data.internal_data->node_list->length; }
 
   Node operator[]( int index )
   {
@@ -79,7 +80,7 @@ public:
       throw std::out_of_range( "Node Node::operator[]: "
         "index out of bounds" );
     }
-    return Node( node->data.internal_data->children[ index ] );
+    return Node( node->data.internal_data->node_list->children[ index ] );
   }
 
   const Node operator[]( int index ) const
@@ -88,7 +89,7 @@ public:
       throw std::out_of_range( "const Node::operator[] const: "
         "index out of bounds" );
     }
-    return Node( node->data.internal_data->children[ index ] );
+    return Node( node->data.internal_data->node_list->children[ index ] );
   }
 
   const Timestamp timeStamp() const

@@ -111,10 +111,7 @@ typedef struct
 webvtt_internal_node_data_t {
   webvtt_string annotation;
   webvtt_stringlist *css_classes;
-
-  webvtt_uint alloc;
-  webvtt_uint length;
-  webvtt_node **children;
+  struct webvtt_node_list_t *node_list;
 } webvtt_internal_node_data;
 
 WEBVTT_EXPORT void

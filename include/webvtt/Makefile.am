@@ -33,4 +33,5 @@ webvttinclude_HEADERS = \
   parser.h \
   string.h \
   util.h \
-  node.h
+  node.h \
+  node_list.h
