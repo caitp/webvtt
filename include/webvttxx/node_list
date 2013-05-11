@@ -37,31 +37,93 @@ namespace WebVTT {
 class NodeList {
 
 public:
-  NodeList() { initEmpty(); }
-  NodeList( NodeList &otherNodeList ) { init( otherNodeList.nodeList ); }
-  NodeList( webvtt_node_list *cNodeList )
+  NodeList()
   {
-    cNodeList ? init( cNodeList ) : initEmpty();
+    webvtt_init_node_list( &list );
   }
-  ~NodeList() { webvtt_release_node_list( &nodeList ); }
 
-  int length() const { nodeList->length; }
-  int alloc() const { nodeList->alloc; }
+  NodeList( const NodeList &other )
+  {
+    webvtt_copy_node_list( &list, &other.list );
+  }
+
+  NodeList( const ::webvtt_node_list *other )
+  {
+    webvtt_copy_node_list( &list, other );
+  }
+
+  ~NodeList()
+  {
+    webvtt_release_node_list( &list );
+  }
+
+  int size() const { list.d->size; }
+  int length() const { return size(); }
+  int alloc() const { list.d->alloc; }
+
+  // Append a node to the back of the list
+  bool push( const Node &n )
+  {
+    return !WEBVTT_FAILED( ::webvtt_node_list_push( &list, n.node ) );
+  }
+
+  // Take the last/top node from the list
+  bool pop( Node &result )
+  {
+    ::webvtt_node *n;
+    if( !!::webvtt_node_list_pop( &list, &result.node ) ) {
+      result = Node(n);
+      ::webvtt_release_node(&n);
+      return true;
+    }
+    return false;
+  }
+
+  // Return the node at the top of stack / back of list
+  bool top( Node &result ) const
+  {
+    ::webvtt_node *n;
+    if( !!::webvtt_node_list_top( &list, &result.node ) ) {
+      result = Node(n);
+      ::webvtt_release_node(&n);
+      return true;
+    }
+    return false;
+  }
+
+  // Prepend a node to this list
+  bool unshift( const Node &n )
+  {
+    return !WEBVTT_FAILED(::webvtt_node_list_unshift( &list, n.node ));
+  }
+
+  // Take the first node in this list
+  // (Much less efficient than taking from end of the list!)
+  bool shift( Node &result )
+  {
+    ::webvtt_node *n;
+    if( !!::webvtt_node_list_shift( &list, &n ) ) {
+      result = Node(n);
+      ::webvtt_release_node(&n);
+      return true;
+    }
+    return false;
+  }
+
+  // Get the node at the front of this list
+  bool front( Node &result ) const
+  {
+    ::webvtt_node *n;
+    if( !!::webvtt_node_list_front( &list, &n ) ) {
+      result = Node(n);
+      ::webvtt_release_node(&n);
+      return true;
+    }
+    return false;
+  }
 
 private:
-  void init( webvtt_node_list *cNodeList )
-  {
-    nodeList = cNodeList;
-    webvtt_ref_node_list( nodeList );
-  }
-
-  void initEmpty()
-  {
-    nodeList = 0;
-    webvtt_init_node_list( &nodeList );
-  }
-
-  webvtt_node_list *nodeList;
+  ::webvtt_node_list list;
 };
 
 }

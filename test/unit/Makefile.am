@@ -3,7 +3,6 @@ AM_CPPFLAGS = \
   -DWEBVTT_STATIC=1 \
   -I$(top_builddir)/include \
   -I$(top_srcdir)/include \
-  -I$(top_srcdir)/src/libwebvtt \
   -I$(top_srcdir)/test/gtest \
   -I$(top_srcdir)/src \
   $(GTEST_CPPFLAGS)
@@ -41,7 +40,8 @@ INTERNAL_TESTS = \
   endtagstatetokenizer_unittest \
   timestamptokenizer_unittest \
   tagclasstokenizer_unittest \
-  stringlist_unittest
+  stringlist_unittest \
+  nodelist_unittest
 
 FILESTRUCTURE_TESTS = \
   filestructure_unittest
@@ -135,6 +135,7 @@ endtagstatetokenizer_unittest_SOURCES = endtagstatetokenizer_unittest.cpp
 timestamptokenizer_unittest_SOURCES = timestamptokenizer_unittest.cpp
 tagclasstokenizer_unittest_SOURCES = tagclasstokenizer_unittest.cpp
 stringlist_unittest_SOURCES = stringlist_unittest.cpp
+nodelist_unittest_SOURCES = nodelist_unittest.cpp
 
 filestructure_unittest_SOURCES = filestructure_unittest.cpp
 # Cue Settings tests

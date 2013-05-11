@@ -42,21 +42,22 @@ webvtt_node_kind_t {
     * Internal Node objects
     */
   WEBVTT_NODE_INTERNAL_START = 0,
-  WEBVTT_CLASS = 0 | WEBVTT_NODE_INTERNAL,
-  WEBVTT_ITALIC = 1 | WEBVTT_NODE_INTERNAL,
-  WEBVTT_BOLD = 2 | WEBVTT_NODE_INTERNAL,
-  WEBVTT_UNDERLINE = 3 | WEBVTT_NODE_INTERNAL,
-  WEBVTT_RUBY = 4 | WEBVTT_NODE_INTERNAL,
-  WEBVTT_RUBY_TEXT = 5 | WEBVTT_NODE_INTERNAL,
-  WEBVTT_VOICE = 6 | WEBVTT_NODE_INTERNAL,
-
   /**
     * This type of node has should not be rendered.
     * It is the top of the node list and only contains a list of nodes.
     */
-  WEBVTT_HEAD_NODE = 7,
+  WEBVTT_HEAD_NODE = 0,
 
-  WEBVTT_NODE_INTERNAL_END = 7,
+  WEBVTT_CLASS,
+  WEBVTT_ITALIC,
+  WEBVTT_BOLD,
+  WEBVTT_UNDERLINE,
+  WEBVTT_RUBY,
+  WEBVTT_RUBY_TEXT,
+  WEBVTT_VOICE,
+
+
+  WEBVTT_NODE_INTERNAL_END,
 
   /**
     * Leaf Node objects
@@ -90,7 +91,6 @@ struct webvtt_internal_node_data_t;
 
 typedef struct
 webvtt_node_t {
-
   struct webvtt_refcount_t refs;
   /**
     * The specification asks for uni directional linked list, but we have added
@@ -107,13 +107,6 @@ webvtt_node_t {
   } data;
 } webvtt_node;
 
-typedef struct
-webvtt_internal_node_data_t {
-  webvtt_string annotation;
-  webvtt_stringlist *css_classes;
-  struct webvtt_node_list_t *node_list;
-} webvtt_internal_node_data;
-
 WEBVTT_EXPORT void
 webvtt_init_node( webvtt_node **node );
 
@@ -122,6 +115,9 @@ webvtt_ref_node( webvtt_node *node );
 
 WEBVTT_EXPORT void
 webvtt_release_node( webvtt_node **node );
+
+WEBVTT_EXPORT void
+webvtt_copy_node( webvtt_node **dest, const webvtt_node *src );
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

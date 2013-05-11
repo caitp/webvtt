@@ -33,28 +33,58 @@
 extern "C" {
 #endif
 
+typedef struct
+webvtt_node_list_data_t {
+  struct webvtt_refcount_t refs;
+  int alloc;
+  int size;
+  webvtt_node *array[1];
+} webvtt_node_list_data;
+
 typedef struct 
 webvtt_node_list_t {
-  struct webvtt_refcount_t refs;
-  webvtt_uint alloc;
-  webvtt_uint length;
-  webvtt_node **children;
+  webvtt_node_list_data *d;
 } webvtt_node_list;
 
 WEBVTT_EXPORT void
-webvtt_init_node_list( webvtt_node_list **out );
-
-WEBVTT_EXPORT webvtt_status
-webvtt_create_node_list( webvtt_node_list **out );
+webvtt_init_node_list( webvtt_node_list *out );
 
 WEBVTT_EXPORT void
 webvtt_ref_node_list( webvtt_node_list *list );
 
 WEBVTT_EXPORT void
-webvtt_release_node_list( webvtt_node_list **list );
+webvtt_copy_node_list( webvtt_node_list *dest, const webvtt_node_list *src );
+
+WEBVTT_EXPORT void
+webvtt_release_node_list( webvtt_node_list *list );
 
 WEBVTT_EXPORT webvtt_status
-webvtt_node_list_push( webvtt_node_list *list, webvtt_node *to_attach );
+webvtt_node_list_push( webvtt_node_list *list, const webvtt_node *node );
+
+WEBVTT_EXPORT webvtt_bool
+webvtt_node_list_pop( webvtt_node_list *list, webvtt_node **out );
+
+WEBVTT_EXPORT webvtt_bool
+webvtt_node_list_top( const webvtt_node_list *list, webvtt_node **out );
+
+WEBVTT_EXPORT webvtt_status
+webvtt_node_list_unshift( webvtt_node_list *list, const webvtt_node *node );
+
+WEBVTT_EXPORT webvtt_bool
+webvtt_node_list_shift( webvtt_node_list *list, webvtt_node **out );
+
+WEBVTT_EXPORT webvtt_bool
+webvtt_node_list_front( const webvtt_node_list *list, webvtt_node **out );
+
+/**
+ * Had to move this so that it can reference shrable node_list
+ */
+typedef struct
+webvtt_internal_node_data_t {
+  webvtt_string annotation;
+  webvtt_stringlist *css_classes;
+  struct webvtt_node_list_t node_list;
+} webvtt_internal_node_data;
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

@@ -70,9 +70,22 @@ public:
   }
   ~Node() { webvtt_release_node( &node ); }
 
+  bool isLeafNode() const {
+    return WEBVTT_IS_LEAF(kind());
+  }
+
+  bool isInternalNode() const {
+    return !WEBVTT_IS_LEAF(kind());
+  }
+
   bool isEmpty() const { return kind() == Empty; }
   NodeKind kind() const { return (NodeKind)node->kind; }
-  int childCount() const { return node->data.internal_data->node_list->length; }
+  int childCount() const {
+    if( isLeafNode() ) {
+      return 0;
+    }
+    return node->data.internal_data->node_list.d->size;
+  }
 
   Node operator[]( int index )
   {
@@ -80,7 +93,7 @@ public:
       throw std::out_of_range( "Node Node::operator[]: "
         "index out of bounds" );
     }
-    return Node( node->data.internal_data->node_list->children[ index ] );
+    return Node( node->data.internal_data->node_list.d->array[ index ] );
   }
 
   const Node operator[]( int index ) const
@@ -89,7 +102,7 @@ public:
       throw std::out_of_range( "const Node::operator[] const: "
         "index out of bounds" );
     }
-    return Node( node->data.internal_data->node_list->children[ index ] );
+    return Node( node->data.internal_data->node_list.d->array[ index ] );
   }
 
   const Timestamp timeStamp() const
@@ -124,6 +137,7 @@ public:
     return StringList( node->data.internal_data->css_classes );
   }
 private:
+  friend class NodeList;
   webvtt_node *node;
 };
 

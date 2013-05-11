@@ -41,6 +41,10 @@ webvtt_ref_node( webvtt_node *node )
 {
   if( node ) {
     webvtt_ref( &node->refs );
+    if( !WEBVTT_IS_LEAF(node->kind) && node->data.internal_data ) {
+      webvtt_internal_node_data *d = node->data.internal_data; 
+      /*webvtt_ref_node_list( &d->node_list );*/
+    }
   }
 }
 
@@ -53,6 +57,15 @@ webvtt_init_node( webvtt_node **node )
     }
     *node = &empty_node;
     webvtt_ref_node( *node );
+  }
+}
+
+WEBVTT_EXPORT void
+webvtt_copy_node( webvtt_node **dest, const webvtt_node *src )
+{
+  if( dest && src ) {
+    webvtt_ref_node( (webvtt_node *)src );
+    *dest = (webvtt_node *)src;
   }
 }
 
@@ -100,7 +113,7 @@ webvtt_create_internal_node( webvtt_node **node, webvtt_node *parent,
 
   webvtt_copy_stringlist( &node_data->css_classes, css_classes );
   webvtt_copy_string( &node_data->annotation, annotation );
-  webvtt_create_node_list( &node_data->node_list );
+  webvtt_init_node_list( &node_data->node_list );
 
   (*node)->data.internal_data = node_data;
 
@@ -170,7 +183,7 @@ webvtt_release_node( webvtt_node **node )
   if( webvtt_deref( &n->refs )  == 0 ) {
     if( n->kind == WEBVTT_TEXT ) {
         webvtt_release_string( &n->data.text );
-    } else if( WEBVTT_IS_VALID_INTERNAL_NODE( n->kind ) &&
+    } else if( !WEBVTT_IS_LEAF( n->kind ) &&
                n->data.internal_data ) {
       webvtt_release_stringlist( &n->data.internal_data->css_classes );
       webvtt_release_string( &n->data.internal_data->annotation );
@@ -185,9 +198,12 @@ webvtt_release_node( webvtt_node **node )
 WEBVTT_INTERN webvtt_status
 webvtt_attach_node( webvtt_node *parent, webvtt_node *to_attach )
 {
-  if( !parent || !to_attach ) {
+  /**
+   * Don't allow attaching to LEAF nodes!
+   */
+  if( !parent || !to_attach || WEBVTT_IS_LEAF(parent->kind) ) {
     return WEBVTT_INVALID_PARAM;
   }
-  return webvtt_node_list_push( parent->data.internal_data->node_list,
+  return webvtt_node_list_push( &parent->data.internal_data->node_list,
                                 to_attach );
 }
