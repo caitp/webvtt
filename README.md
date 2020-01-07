@@ -1,4 +1,4 @@
-#libwebvtt
+# libwebvtt
 The library for interpreting and authoring conformant WebVTT content
 WebVTT is a caption and subtitle format designed for use with HTML5
 audio and video elements.
@@ -7,7 +7,7 @@ See: [W3C WebVTT Draft](http://dev.w3.org/html5/webvtt/)
 
 [![Build Status](https://travis-ci.org/mozilla/webvtt.png?branch=dev)](https://travis-ci.org/mozilla/webvtt)
 
-##Build Instructions:
+## Build Instructions:
 
 In Unix-like environments, we use autotools:
 
@@ -17,7 +17,7 @@ In Unix-like environments, we use autotools:
 
 On Windows, we use a Visual Studio Project, see files in build/msvc2010
 
-##Running Tests:
+## Running Tests:
 
 All tests are written using Google Test, and run using `make check`. You can configure the tests to run with our without valgrind, for memory checking.
 
@@ -39,7 +39,7 @@ make check
 
 When running tests with valgrind, any test that fails valgrind (even if it passes Google Test) will fail. See `test/unit/Makefile.am` for info on known test failures, and how to add/remove them.
 
-##Routines available to application:
+## Routines available to application:
 ### Parser Object
         webvtt_status webvtt_create_parser( webvtt_cue_fn on_read, webvtt_error_fn on_error, void *userdata, webvtt_parser *ppout );
         void webvtt_delete_parser( webvtt_parser parser );
@@ -109,7 +109,7 @@ When running tests with valgrind, any test that fails valgrind (even if it passe
 ## Current Users
   * Mozilla Firefox
   
-##License
+## License
 > Copyright (c) 2013 Mozilla Foundation and Contributors
 > All rights reserved.
 >
