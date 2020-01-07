@@ -105,9 +105,6 @@ When running tests with valgrind, any test that fails valgrind (even if it passe
 
 ### Error handling
 	const char *webvtt_strerror( webvtt_error );
-
-## Current Users
-  * Mozilla Firefox
   
 ## License
 > Copyright (c) 2013 Mozilla Foundation and Contributors
